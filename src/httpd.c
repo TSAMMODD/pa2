@@ -37,6 +37,7 @@ void getRequestMethod(char message[], char requestMethod[]) {
     */
     
     strcpy(requestMethod, splitMessage[0]);
+    g_strfreev(splitMessage);
 }
 
 int main(int argc, char **argv) {
