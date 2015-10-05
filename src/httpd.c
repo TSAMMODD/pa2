@@ -24,6 +24,7 @@
 #define REQUEST_URL_LENGTH 100
 #define MAX_TOKENS -1
 #define MAX_HTML_SIZE 100
+#define PORT_LENGTH 6
 
 /*
  *
@@ -69,15 +70,16 @@ void getRequestURL(char message[], char requestURL[]) {
  *
  */
 void handleGET(int connfd, char requestURL[], int port) {
-    fprintf(stdout, "INSIDE GET. \n");
-    fflush(stdout);
+    //fprintf(stdout, "INSIDE GET. \n");
+    //fflush(stdout);
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
     strcpy(body, "<!DOCTYPE>\n<html>\n<head></head>\n<body>\n");
     strcat(body, requestURL);
     strcat(body, "\n");
-    char s_port[6];
-    itoa(port, s_port, 10);
+    char s_port[PORT_LENGTH];
+    memset(s_port, 0, PORT_LENGTH);
+    snprintf(s_port, PORT_LENGTH, "%d", port);
     strcat(body, s_port);
     strcat(body, "\n");
     strcat(body, "</body>\n</html>\n");
@@ -89,16 +91,16 @@ void handleGET(int connfd, char requestURL[], int port) {
  *
  */
 void handlePOST() {
-    fprintf(stdout, "INSIDE POST. \n");
-    fflush(stdout);
+    //fprintf(stdout, "INSIDE POST. \n");
+    //fflush(stdout);
 }
 
 /*
  *
  */
 void handleHEAD() {
-    fprintf(stdout, "INSIDE HEAD. \n");
-    fflush(stdout);
+    //fprintf(stdout, "INSIDE HEAD. \n");
+    //fflush(stdout);
 }
 
 int main(int argc, char **argv) {
