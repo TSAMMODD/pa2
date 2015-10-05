@@ -1,2 +1,2 @@
 #/bin/bash
-curl localhost:$(/labs/tsam15/my_port)
+curl localhost:$(/labs/tsam15/my_port)/color

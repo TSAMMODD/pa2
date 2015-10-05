@@ -19,7 +19,7 @@
 #include <arpa/inet.h>
 #include <glib.h>
 
-#define REQUEST_METHOD_LENGTH 6
+#define REQUEST_METHOD_LENGTH 8
 #define MAX_TOKENS -1
 
 void getRequestMethod(char message[], char requestMethod[]) {
@@ -37,6 +37,24 @@ void getRequestMethod(char message[], char requestMethod[]) {
     */
     
     strcpy(requestMethod, splitMessage[0]);
+    g_strfreev(splitMessage);
+}
+
+void getRequestURL(char message[], char requestMethod[]) {
+    memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
+    gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
+    
+    /*
+    guint size =  g_strv_length(splitMessage);
+    int i = 0;
+
+    for(; i < size; i++) {
+        fprintf(stdout, "i : %d - %s \n", i, splitMessage[i]);
+        fflush(stdout);
+    }
+    */
+    
+    strcpy(requestMethod, splitMessage[1]);
     g_strfreev(splitMessage);
 }
 
@@ -118,17 +136,19 @@ int main(int argc, char **argv) {
 
             /* TEST */
             char requestMethod[REQUEST_METHOD_LENGTH];
+	    char requestURL[32];
             time_t now;
             time(&now);
             char buf[sizeof "2011-10-08T07:07:09Z"];
             strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
             getRequestMethod(message, requestMethod);
-            
+            getRequestURL(message, requestURL);
 
             fprintf(stdout, "PORT: %d \n", client.sin_port);
             fprintf(stdout, "IP: %s \n", inet_ntoa(client.sin_addr));
             fprintf(stdout, "TIME %s \n", buf);
             fprintf(stdout, "REQUEST METHOD: %s \n", requestMethod);
+            fprintf(stdout, "REQUEST URL: %s \n", requestURL);
             fprintf(stdout, "---------------------------\n");
             fflush(stdout);
 
@@ -138,7 +158,7 @@ int main(int argc, char **argv) {
             fprintf(fp, "REQUEST METHOD: %s \n", requestMethod);
             fprintf(fp, "---------------------------\n");
             fflush(fp);
-            getRequestMethod(message, requestMethod);
+
 
             //Close log file
             fclose(fp);
