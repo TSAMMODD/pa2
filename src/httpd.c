@@ -20,7 +20,7 @@
 
 #define REQUEST_METHOD_LENGTH 6
 
-void getRequestMethod(char* message, char* requestMethod) {
+void getRequestMethod(char message[], char requestMethod[]) {
     memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
 
     int i = 0;
@@ -34,6 +34,9 @@ void getRequestMethod(char* message, char* requestMethod) {
 }
 
 int main(int argc, char **argv) {
+    fprintf(stdout, "%d \n", argc);
+    fflush(stdout);
+
     int sockfd;
     struct sockaddr_in server, client;
     char message[512];
