@@ -51,14 +51,9 @@ void getRequestURL(char message[], char requestURL[]) {
  *
  */
 void getContent(char message[], char content[]) {
-    gchar** splitMessage = g_strsplit(message, "\r", MAX_TOKENS);
+    gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
 
-    int i = 0;
-    for(; i < 10; i++) {
-        fprintf(stdout, "i : %d - %s", i, splitMessage[i]);
-    }
-
-    strcat(content, splitMessage[0]);
+    strcat(content, splitMessage[1]);
     g_strfreev(splitMessage);
 }
 
@@ -204,7 +199,7 @@ int main(int argc, char **argv) {
 
             getRequestMethod(message, requestMethod);
             getRequestURL(message, requestURL);
-            getContent(message, content);
+            
 
             /* GET. */ 
             if(strcmp(requestMethod, "GET") == 0) {
@@ -212,7 +207,8 @@ int main(int argc, char **argv) {
             }
             /* POST. */
             else if(strcmp(requestMethod, "POST") == 0) {
-                handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content);
+            	getContent(message, content);
+		handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content);
             }
             /* HEAD. */
             else if(strcmp(requestMethod, "HEAD") == 0) {
