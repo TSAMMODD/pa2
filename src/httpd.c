@@ -25,7 +25,10 @@ void getRequestMethod(char message[], char requestMethod[]) {
 
     int i = 0;
     while(message[i] != ' ') {
-        strcat(requestMethod, (char*)message[i]);
+        fprintf(stdout, "i : %d - %c", i, message[i]);
+        fflush(stdout);
+        //strcpy(requestMethod, (char*)message[i]);
+        //strcpy(requestMethod, "flot");
         i++;
     }
     
