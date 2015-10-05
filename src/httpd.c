@@ -18,10 +18,12 @@
 #include <time.h>
 #include <arpa/inet.h>
 #include <glib.h>
+#include <stdlib.h>
 
 #define REQUEST_METHOD_LENGTH 8
 #define REQUEST_URL_LENGTH 100
 #define MAX_TOKENS -1
+#define MAX_HTML_SIZE 100
 
 /*
  *
@@ -66,9 +68,21 @@ void getRequestURL(char message[], char requestURL[]) {
 /*
  *
  */
-void handleGET() {
+void handleGET(int connfd, char requestURL[], int port) {
     fprintf(stdout, "INSIDE GET. \n");
     fflush(stdout);
+    char body[MAX_HTML_SIZE];
+    memset(body, 0, MAX_HTML_SIZE);
+    strcpy(body, "<!DOCTYPE>\n<html>\n<head></head>\n<body>\n");
+    strcat(body, requestURL);
+    strcat(body, "\n");
+    char s_port[6];
+    itoa(port, s_port, 10);
+    strcat(body, s_port);
+    strcat(body, "\n");
+    strcat(body, "</body>\n</html>\n");
+    ssize_t n =  sizeof(body) ;
+    write(connfd, body, (size_t) n);
 }
 
 /*
@@ -150,19 +164,16 @@ int main(int argc, char **argv) {
             ssize_t n = read(connfd, message, sizeof(message) - 1);
 
             /* Send the message back. */
-            write(connfd, message, (size_t) n);
-
-            /* We should close the connection. */
-            shutdown(connfd, SHUT_RDWR);
-            close(connfd);
+            //write(connfd, message, (size_t) n);
 
             /* Zero terminate the message, otherwise
                printf may access memory outside of the
                string. */
             message[n] = '\0';
             /* Print the message to stdout and flush. */
-            fprintf(stdout, "Received:\n%s\n", message);
-            fflush(stdout);
+            //fprintf(stdout, "Received:\n%s\n", message);
+            //fflush(stdout);
+
 
             char requestMethod[REQUEST_METHOD_LENGTH];
             char requestURL[REQUEST_URL_LENGTH];
@@ -174,14 +185,15 @@ int main(int argc, char **argv) {
             time(&now);
             char buf[sizeof "2011-10-08T07:07:09Z"];
             strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+	    fprintf(stdout, "flot \n");
 
             getRequestMethod(message, requestMethod);
             getRequestURL(message, requestURL);
 
             /* GET. */ 
             if(strcmp(requestMethod, "GET") == 0) {
-                handleGET();
-            }
+                handleGET(connfd, requestURL, client.sin_port);
+   	    }
             /* POST. */
             else if(strcmp(requestMethod, "POST") == 0) {
                 handlePOST();
@@ -201,6 +213,9 @@ int main(int argc, char **argv) {
             fprintf(fp, "%s : %s:%d %s\n%s : %d\n", buf, inet_ntoa(client.sin_addr), client.sin_port, requestMethod, requestURL, 200);
             fflush(fp);
 
+	    /* We should close the connection. */
+            shutdown(connfd, SHUT_RDWR);
+            close(connfd);
             /* Close log file. */
             fclose(fp);
         } else {
