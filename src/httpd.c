@@ -15,9 +15,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <time.h>
+#include <arpa/inet.h>
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
     char message[512];
@@ -36,6 +37,7 @@ int main(int argc, char **argv)
      * 1 connection to queue for simplicity.
      */
     listen(sockfd, 1);
+
 
     for (;;) {
         fd_set rfds;
@@ -84,6 +86,18 @@ int main(int argc, char **argv)
             /* Print the message to stdout and flush. */
             fprintf(stdout, "Received:\n%s\n", message);
             fflush(stdout);
+
+            /* TEST */
+            time_t now;
+            time(&now);
+            char buf[sizeof "2011-10-08T07:07:09Z"];
+            strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+            
+            fprintf(stdout, "PORT: %d \n", client.sin_port);
+            fprintf(stdout, "IP: %s \n", inet_ntoa(client.sin_addr));
+            fprintf(stdout, "TIME %s \n", buf);
+            fflush(stdout);
+            /* END OF TEST */
         } else {
             fprintf(stdout, "No message in five seconds.\n");
             fflush(stdout);
