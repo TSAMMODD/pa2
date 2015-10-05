@@ -26,6 +26,7 @@
 #define MAX_HTML_SIZE 1000
 #define PORT_LENGTH 6
 #define CONTENT_LENGTH 1000
+#define HEAD_LENGTH 1000
 
 /*
  *
@@ -54,6 +55,18 @@ void getContent(char message[], char content[]) {
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
 
     strcat(content, splitMessage[1]);
+    g_strfreev(splitMessage);
+}
+
+/*
+ *
+ */
+void getHead(char message[], char head[]) {	
+    gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
+    fprintf(stdout, "getheadstart\n %s \n getheadend \n", splitMessage[0]);
+    strcat(head, splitMessage[0]);
+    fprintf(stdout, "head in gethead\n %s \n endofshit \n", head);
+    fflush(stdout);
     g_strfreev(splitMessage);
 }
 
@@ -104,9 +117,12 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
 /*
  *
  */
-void handleHEAD() {
-    //fprintf(stdout, "INSIDE HEAD. \n");
-    //fflush(stdout);
+void handleHEAD(int connfd, char head[]) {
+    fprintf(stdout, "hellohello \n %s \n", head);
+    ssize_t n = HEAD_LENGTH;
+    fprintf(stdout, "here is n \n %d end\n", n);
+    fflush(stdout);
+    write(connfd, head, (size_t) n);
 }
 
 int main(int argc, char **argv) {
@@ -186,9 +202,11 @@ int main(int argc, char **argv) {
             char requestMethod[REQUEST_METHOD_LENGTH];
             char requestURL[REQUEST_URL_LENGTH];
             char content[CONTENT_LENGTH];
+	    char head[HEAD_LENGTH];
             memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
             memset(requestURL, 0, REQUEST_URL_LENGTH);
             memset(content, 0, CONTENT_LENGTH);
+	    memset(head, 0, HEAD_LENGTH);
 
             strcpy(requestURL, "http://localhost/");
             strcat(requestURL, argv[1]);
@@ -212,7 +230,11 @@ int main(int argc, char **argv) {
             }
             /* HEAD. */
             else if(strcmp(requestMethod, "HEAD") == 0) {
-                handleHEAD();
+                
+		fprintf(stdout, "%d", (ssize_t)sizeof(head));
+		getHead(message, head);
+		
+		handleHEAD(connfd, head);
             }
             /* Error. */
             else {
