@@ -26,10 +26,10 @@ void getRequestMethod(char message[], char requestMethod[]) {
     memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
     
-    // guint size =  g_strv_length(splitMessage);
-    
     /*
+    guint size =  g_strv_length(splitMessage);
     int i = 0;
+
     for(; i < size; i++) {
         fprintf(stdout, "i : %d - %s \n", i, splitMessage[i]);
         fflush(stdout);
