@@ -23,24 +23,15 @@
 #define REQUEST_METHOD_LENGTH 8
 #define REQUEST_URL_LENGTH 100
 #define MAX_TOKENS -1
-#define MAX_HTML_SIZE 100
+#define MAX_HTML_SIZE 1000
 #define PORT_LENGTH 6
+#define CONTENT_LENGTH 1000
 
 /*
  *
  */
 void getRequestMethod(char message[], char requestMethod[]) {
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
-    
-    /*
-    guint size =  g_strv_length(splitMessage);
-    int i = 0;
-
-    for(; i < size; i++) {
-        fprintf(stdout, "i : %d - %s \n", i, splitMessage[i]);
-        fflush(stdout);
-    }
-    */
     
     strcpy(requestMethod, (char*)splitMessage[0]);
     g_strfreev(splitMessage);
@@ -52,16 +43,6 @@ void getRequestMethod(char message[], char requestMethod[]) {
 void getRequestURL(char message[], char requestURL[]) {
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
     
-    /*
-    guint size =  g_strv_length(splitMessage);
-    int i = 0;
-
-    for(; i < size; i++) {
-        fprintf(stdout, "i : %d - %s \n", i, splitMessage[i]);
-        fflush(stdout);
-    }
-    */
-    
     strcat(requestURL, splitMessage[1]);
     g_strfreev(splitMessage);
 }
@@ -69,13 +50,28 @@ void getRequestURL(char message[], char requestURL[]) {
 /*
  *
  */
-void handleGET(int connfd, char requestURL[], int port) {
-    //fprintf(stdout, "INSIDE GET. \n");
-    //fflush(stdout);
+void getContent(char message[], char content[]) {
+    gchar** splitMessage = g_strsplit(message, "\r", MAX_TOKENS);
+
+    int i = 0;
+    for(; i < 10; i++) {
+        fprintf(stdout, "i : %d - %s", i, splitMessage[i]);
+    }
+
+    strcat(content, splitMessage[0]);
+    g_strfreev(splitMessage);
+}
+
+/*
+ *
+ */
+void handleGET(int connfd, char requestURL[], char ip_address[], int port) {
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
     strcpy(body, "<!DOCTYPE>\n<html>\n<head></head>\n<body>\n");
     strcat(body, requestURL);
+    strcat(body, "\n");
+    strcat(body, ip_address);
     strcat(body, "\n");
     char s_port[PORT_LENGTH];
     memset(s_port, 0, PORT_LENGTH);
@@ -90,9 +86,24 @@ void handleGET(int connfd, char requestURL[], int port) {
 /*
  *
  */
-void handlePOST() {
-    //fprintf(stdout, "INSIDE POST. \n");
-    //fflush(stdout);
+void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char content[]) {
+    char body[MAX_HTML_SIZE];
+    memset(body, 0, MAX_HTML_SIZE);
+    strcpy(body, "<!DOCTYPE>\n<html>\n<head></head>\n<body>\n");
+    strcat(body, requestURL);
+    strcat(body, "\n");
+    strcat(body, ip_address);
+    strcat(body, "\n");
+    char s_port[PORT_LENGTH];
+    memset(s_port, 0, PORT_LENGTH);
+    snprintf(s_port, PORT_LENGTH, "%d", port);
+    strcat(body, s_port);
+    strcat(body, "\n");
+    strcat(body, content);
+    strcat(body, "\n");
+    strcat(body, "</body>\n</html>\n");
+    ssize_t n =  sizeof(body) ;
+    write(connfd, body, (size_t) n);
 }
 
 /*
@@ -179,26 +190,29 @@ int main(int argc, char **argv) {
 
             char requestMethod[REQUEST_METHOD_LENGTH];
             char requestURL[REQUEST_URL_LENGTH];
+            char content[CONTENT_LENGTH];
             memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
             memset(requestURL, 0, REQUEST_URL_LENGTH);
+            memset(content, 0, CONTENT_LENGTH);
+
             strcpy(requestURL, "http://localhost/");
             strcat(requestURL, argv[1]);
             time_t now;
             time(&now);
             char buf[sizeof "2011-10-08T07:07:09Z"];
             strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
-	    fprintf(stdout, "flot \n");
 
             getRequestMethod(message, requestMethod);
             getRequestURL(message, requestURL);
+            getContent(message, content);
 
             /* GET. */ 
             if(strcmp(requestMethod, "GET") == 0) {
-                handleGET(connfd, requestURL, client.sin_port);
-   	    }
+                handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port);
+            }
             /* POST. */
             else if(strcmp(requestMethod, "POST") == 0) {
-                handlePOST();
+                handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content);
             }
             /* HEAD. */
             else if(strcmp(requestMethod, "HEAD") == 0) {
