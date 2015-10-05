@@ -147,19 +147,25 @@ int main(int argc, char **argv) {
             getRequestMethod(message, requestMethod);
             getRequestURL(message, requestURL);
 
+            /*
             fprintf(stdout, "PORT: %d \n", client.sin_port);
             fprintf(stdout, "IP: %s \n", inet_ntoa(client.sin_addr));
             fprintf(stdout, "TIME %s \n", buf);
             fprintf(stdout, "REQUEST METHOD: %s \n", requestMethod);
             fprintf(stdout, "REQUEST URL: %s \n", requestURL);
             fprintf(stdout, "---------------------------\n");
+            */
+            fprintf(stdout, "%s : %s:%d %s\n%s : %d\n", buf, inet_ntoa(client.sin_addr), client.sin_port, requestMethod, requestURL, 200);
             fflush(stdout);
 
+            /*
             fprintf(fp, "PORT: %d \n", client.sin_port);
             fprintf(fp, "IP: %s \n", inet_ntoa(client.sin_addr));
             fprintf(fp, "TIME %s \n", buf);
             fprintf(fp, "REQUEST METHOD: %s \n", requestMethod);
             fprintf(fp, "---------------------------\n");
+            */
+            fprintf(fp, "%s : %s:%d %s\n%s : %d\n", buf, inet_ntoa(client.sin_addr), client.sin_port, requestMethod, requestURL, 200);
             fflush(fp);
 
 
