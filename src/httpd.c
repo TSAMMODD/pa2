@@ -20,6 +20,7 @@
 #include <glib.h>
 
 #define REQUEST_METHOD_LENGTH 8
+#define REQUEST_URL_LENGTH 32
 #define MAX_TOKENS -1
 
 void getRequestMethod(char message[], char requestMethod[]) {
@@ -36,12 +37,12 @@ void getRequestMethod(char message[], char requestMethod[]) {
     }
     */
     
-    strcpy(requestMethod, splitMessage[0]);
+    strcpy(requestMethod, (char*)splitMessage[0]);
     g_strfreev(splitMessage);
 }
 
-void getRequestURL(char message[], char requestMethod[]) {
-    memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
+void getRequestURL(char message[], char requestURL[]) {
+    memset(requestURL, 0, REQUEST_URL_LENGTH);
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
     
     /*
@@ -54,8 +55,10 @@ void getRequestURL(char message[], char requestMethod[]) {
     }
     */
     
-    strcpy(requestMethod, splitMessage[1]);
+    strcat(requestURL, splitMessage[1]);
     g_strfreev(splitMessage);
+    fprintf(stdout, "TEST: %s \n", requestURL);
+    fflush(stdout);
 }
 
 int main(int argc, char **argv) {
@@ -136,7 +139,10 @@ int main(int argc, char **argv) {
 
             /* TEST */
             char requestMethod[REQUEST_METHOD_LENGTH];
-	    char requestURL[32];
+            char requestURL[REQUEST_URL_LENGTH] = "localhost/";
+            strcat(requestURL, argv[1]);
+            fprintf(stdout, "TESTTEST: %s \n", requestURL);
+            fflush(stdout);
             time_t now;
             time(&now);
             char buf[sizeof "2011-10-08T07:07:09Z"];
