@@ -40,6 +40,8 @@ void getRequestMethod(char message[], char requestMethod[]) {
 }
 
 int main(int argc, char **argv) {
+    FILE *fp;
+
     fprintf(stdout, "%d \n", argc);
     fflush(stdout);
 
@@ -80,6 +82,8 @@ int main(int argc, char **argv) {
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
+            fp = fopen("src/httpd.log", "a+");
+            
             /* Data is available, receive it. */
             assert(FD_ISSET(sockfd, &rfds));
 
@@ -119,11 +123,24 @@ int main(int argc, char **argv) {
             strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
             getRequestMethod(message, requestMethod);
             
+
             fprintf(stdout, "PORT: %d \n", client.sin_port);
             fprintf(stdout, "IP: %s \n", inet_ntoa(client.sin_addr));
             fprintf(stdout, "TIME %s \n", buf);
-            fprintf(stdout, "REQUESTMETHOD %s \n", requestMethod);
+            fprintf(stdout, "REQUEST METHOD: %s \n", requestMethod);
+            fprintf(stdout, "---------------------------\n");
             fflush(stdout);
+
+            fprintf(fp, "PORT: %d \n", client.sin_port);
+            fprintf(fp, "IP: %s \n", inet_ntoa(client.sin_addr));
+            fprintf(fp, "TIME %s \n", buf);
+            fprintf(fp, "REQUEST METHOD: %s \n", requestMethod);
+            fprintf(fp, "---------------------------\n");
+            fflush(fp);
+            getRequestMethod(message, requestMethod);
+
+            //Close log file
+            fclose(fp);
             /* END OF TEST */
         } else {
             fprintf(stdout, "No message in five seconds.\n");
