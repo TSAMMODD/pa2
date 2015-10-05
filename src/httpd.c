@@ -18,6 +18,21 @@
 #include <time.h>
 #include <arpa/inet.h>
 
+#define REQUEST_METHOD_LENGTH 6
+
+void getRequestMethod(char* message, char* requestMethod) {
+    memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
+
+    int i = 0;
+    while(message[i] != ' ') {
+        strcat(requestMethod, (char*)message[i]);
+        i++;
+    }
+    
+    fprintf(stdout, "%s", requestMethod);
+    fflush(stdout);
+}
+
 int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
@@ -88,6 +103,7 @@ int main(int argc, char **argv) {
             fflush(stdout);
 
             /* TEST */
+            char requestMethod[REQUEST_METHOD_LENGTH];
             time_t now;
             time(&now);
             char buf[sizeof "2011-10-08T07:07:09Z"];
@@ -97,6 +113,7 @@ int main(int argc, char **argv) {
             fprintf(stdout, "IP: %s \n", inet_ntoa(client.sin_addr));
             fprintf(stdout, "TIME %s \n", buf);
             fflush(stdout);
+            getRequestMethod(message, requestMethod);
             /* END OF TEST */
         } else {
             fprintf(stdout, "No message in five seconds.\n");
