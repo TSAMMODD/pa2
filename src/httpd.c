@@ -20,6 +20,7 @@
 #include <glib.h>
 
 #define REQUEST_METHOD_LENGTH 8
+#define REQUEST_URL_LENGTH 32
 #define MAX_TOKENS -1
 
 void getRequestMethod(char message[], char requestMethod[]) {
@@ -136,7 +137,7 @@ int main(int argc, char **argv) {
 
             /* TEST */
             char requestMethod[REQUEST_METHOD_LENGTH];
-	    char requestURL[32];
+            char requestURL[REQUEST_URL_LENGTH];
             time_t now;
             time(&now);
             char buf[sizeof "2011-10-08T07:07:09Z"];
