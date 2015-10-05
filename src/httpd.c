@@ -23,6 +23,9 @@
 #define REQUEST_URL_LENGTH 100
 #define MAX_TOKENS -1
 
+/*
+ *
+ */
 void getRequestMethod(char message[], char requestMethod[]) {
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
     
@@ -40,6 +43,9 @@ void getRequestMethod(char message[], char requestMethod[]) {
     g_strfreev(splitMessage);
 }
 
+/*
+ *
+ */
 void getRequestURL(char message[], char requestURL[]) {
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
     
@@ -55,6 +61,30 @@ void getRequestURL(char message[], char requestURL[]) {
     
     strcat(requestURL, splitMessage[1]);
     g_strfreev(splitMessage);
+}
+
+/*
+ *
+ */
+void handleGET() {
+    fprintf(stdout, "INSIDE GET. \n");
+    fflush(stdout);
+}
+
+/*
+ *
+ */
+void handlePOST() {
+    fprintf(stdout, "INSIDE POST. \n");
+    fflush(stdout);
+}
+
+/*
+ *
+ */
+void handleHEAD() {
+    fprintf(stdout, "INSIDE HEAD. \n");
+    fflush(stdout);
 }
 
 int main(int argc, char **argv) {
@@ -100,6 +130,7 @@ int main(int argc, char **argv) {
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
+            /* Open file. */
             fp = fopen("src/httpd.log", "a+");
             
             /* Data is available, receive it. */
@@ -133,7 +164,6 @@ int main(int argc, char **argv) {
             fprintf(stdout, "Received:\n%s\n", message);
             fflush(stdout);
 
-            /* TEST */
             char requestMethod[REQUEST_METHOD_LENGTH];
             char requestURL[REQUEST_URL_LENGTH];
             memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
@@ -144,34 +174,35 @@ int main(int argc, char **argv) {
             time(&now);
             char buf[sizeof "2011-10-08T07:07:09Z"];
             strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+
             getRequestMethod(message, requestMethod);
             getRequestURL(message, requestURL);
 
-            /*
-            fprintf(stdout, "PORT: %d \n", client.sin_port);
-            fprintf(stdout, "IP: %s \n", inet_ntoa(client.sin_addr));
-            fprintf(stdout, "TIME %s \n", buf);
-            fprintf(stdout, "REQUEST METHOD: %s \n", requestMethod);
-            fprintf(stdout, "REQUEST URL: %s \n", requestURL);
-            fprintf(stdout, "---------------------------\n");
-            */
+            /* GET. */ 
+            if(strcmp(requestMethod, "GET") == 0) {
+                handleGET();
+            }
+            /* POST. */
+            else if(strcmp(requestMethod, "POST") == 0) {
+                handlePOST();
+            }
+            /* HEAD. */
+            else if(strcmp(requestMethod, "HEAD") == 0) {
+                handleHEAD();
+            }
+            /* Error. */
+            else {
+            }
+
+            /* Write info to screen. */
             fprintf(stdout, "%s : %s:%d %s\n%s : %d\n", buf, inet_ntoa(client.sin_addr), client.sin_port, requestMethod, requestURL, 200);
             fflush(stdout);
-
-            /*
-            fprintf(fp, "PORT: %d \n", client.sin_port);
-            fprintf(fp, "IP: %s \n", inet_ntoa(client.sin_addr));
-            fprintf(fp, "TIME %s \n", buf);
-            fprintf(fp, "REQUEST METHOD: %s \n", requestMethod);
-            fprintf(fp, "---------------------------\n");
-            */
+            /* Write info to file. */
             fprintf(fp, "%s : %s:%d %s\n%s : %d\n", buf, inet_ntoa(client.sin_addr), client.sin_port, requestMethod, requestURL, 200);
             fflush(fp);
 
-
-            //Close log file
+            /* Close log file. */
             fclose(fp);
-            /* END OF TEST */
         } else {
             fprintf(stdout, "No message in five seconds.\n");
             fflush(stdout);
