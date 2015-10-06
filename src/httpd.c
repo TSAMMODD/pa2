@@ -52,19 +52,9 @@ void getRequestURL(char message[], char requestURL[]) {
  *
  */
 void getContent(char message[], char content[]) {
-    fprintf(stdout, "flot1\n");
-    fflush(stdout);
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
-    fprintf(stdout, "flot2\n");
-    fflush(stdout);
-    fprintf(stdout, "%s - %s\n", message, splitMessage[1]);
-    fflush(stdout);
     strcat(content, splitMessage[1]);
-    fprintf(stdout, "flot3\n");
-    fflush(stdout);
     g_strfreev(splitMessage);
-    fprintf(stdout, "flot4\n");
-    fflush(stdout);
 }
 
 /*
@@ -125,7 +115,7 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     memset(body, 0, MAX_HTML_SIZE);
     handleHEAD(head);
     strcpy(body, head);
-    strcat(body, "<!DOCTYPE>\n<html>\n<head></head>\n<body>\n");
+    strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
     strcat(body, requestURL);
     strcat(body, "\n");
     strcat(body, ip_address);
@@ -167,11 +157,6 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
 
 
 void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], char ip_address[]) {
-    /* Receive one byte less than declared,
-       because it will be zero-termianted
-       below. */
-    ssize_t n = read(connfd, message, MESSAGE_LENGTH - 1);
-
     char requestMethod[REQUEST_METHOD_LENGTH];
     char requestURL[REQUEST_URL_LENGTH];
     char content[CONTENT_LENGTH];
@@ -198,15 +183,8 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     }
     /* POST. */
     else if(strcmp(requestMethod, "POST") == 0) {
-        fprintf(stdout, "what1 \n");
-        fflush(stdout);
         getContent(message, content);
-        fprintf(stdout, "what3 \n");
-        fflush(stdout);
-        //handleHEAD(connfd);
         handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content, head);
-        fprintf(stdout, "what3 \n");
-        fflush(stdout);
     }
     /* HEAD. */
     else if(strcmp(requestMethod, "HEAD") == 0) {
@@ -291,22 +269,33 @@ int main(int argc, char **argv) {
             int connfd;
             connfd = accept(sockfd, (struct sockaddr *) &client, &len);
 
-            while((elapsedTime - currTime) < CONNECTION_TIME) {
-                //fprintf(stdout, "Elapsed: %d\n", elapsedTime-currTime);
-                //fflush(stdout);
 
-                /*
-                if(FD_ISSET(connfd, &sockfd)) {
-                    fprintf(stdout, "This wont probably work. \n");
+           // while((elapsedTime - currTime) < CONNECTION_TIME) {
+
+                /* Receive one byte less than declared,
+                   because it will be zero-termianted
+                   below. */
+		fprintf(stdout, "Before Read\n");
+                fflush(stdout);
+                ssize_t n = read(connfd, message, sizeof(message) - 1);
+		fprintf(stdout, "After Read\n");
+                fflush(stdout);
+                if(n > 0) {
+                    //fprintf(stdout, "Inside IF: %s \n", message);
+                    //fflush(stdout);
+                    handler(connfd, client, fp, message, argv[1]);
+                    time(&currTime);
+                }
+                else {
+                    fprintf(stdout, "inside else \n");
                     fflush(stdout);
                 }
-                */ 
-
+		fprintf(stdout, "after ifs\n");
+		fflush(stdout);
 
                 time(&elapsedTime);
-            }
+   //         }
             
-            handler(connfd, client, fp, message, argv[1]);
 
             /* Close the connection. */
             shutdown(connfd, SHUT_RDWR);
