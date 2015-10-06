@@ -138,7 +138,7 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     memset(body, 0, MAX_HTML_SIZE);
     handleHEAD(head);
     strcpy(body, head);
-    strcat(body, "<!DOCTYPE>\n<html>\n<head></head>\n<body>\n");
+    strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
     strcat(body, requestURL);
     strcat(body, "\n");
     strcat(body, ip_address);
