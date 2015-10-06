@@ -27,6 +27,7 @@
 #define PORT_LENGTH 6
 #define CONTENT_LENGTH 1000
 #define HEAD_LENGTH 1000
+#define CONNECTION_TIME 30
 
 /*
  *
@@ -127,10 +128,8 @@ int main(int argc, char **argv) {
     char message[512];
     time_t currTime;
     time_t elapsedTime;
-    time( &elapsedTime );
-    time( &currTime );
-    fprintf(stdout, "\n%d\n", currTime);
-    fflush(stdout);
+    time(&elapsedTime);
+    time(&currTime);
     /* Create and bind a UDP socket */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     memset(&server, 0, sizeof(server));
@@ -164,17 +163,12 @@ int main(int argc, char **argv) {
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
-	    time(&currTime);
+            time(&currTime);
+            time(&elapsedTime);
 
-  	    time(&elapsedTime);
-	    while (elapsedTime-currTime < 30){
-		fprintf(stdout, "Elapsed: %d\n", elapsedTime-currTime);
-		fflush(stdout);
-		time(&elapsedTime);
-	    }
             /* Open file. */
             fp = fopen("src/httpd.log", "a+");
-            
+
             /* Data is available, receive it. */
             assert(FD_ISSET(sockfd, &rfds));
 
@@ -183,25 +177,25 @@ int main(int argc, char **argv) {
 
             /* For TCP connectios, we first have to accept. */
             int connfd;
-            connfd = accept(sockfd, (struct sockaddr *) &client,
-                    &len);
+            connfd = accept(sockfd, (struct sockaddr *) &client, &len);
+
+            while((elapsedTime - currTime) < CONNECTION_TIME) {
+                fprintf(stdout, "Elapsed: %d\n", elapsedTime-currTime);
+                fflush(stdout);
+
+
+                time(&elapsedTime);
+            }
 
             /* Receive one byte less than declared,
                because it will be zero-termianted
                below. */
             ssize_t n = read(connfd, message, sizeof(message) - 1);
 
-            /* Send the message back. */
-            //write(connfd, message, (size_t) n);
-
             /* Zero terminate the message, otherwise
                printf may access memory outside of the
                string. */
             message[n] = '\0';
-            /* Print the message to stdout and flush. */
-            //fprintf(stdout, "Received:\n%s\n", message);
-            //fflush(stdout);
-
 
             char requestMethod[REQUEST_METHOD_LENGTH];
             char requestURL[REQUEST_URL_LENGTH];
@@ -221,7 +215,7 @@ int main(int argc, char **argv) {
 
             getRequestMethod(message, requestMethod);
             getRequestURL(message, requestURL);
-            
+
 
             /* GET. */ 
             if(strcmp(requestMethod, "GET") == 0) {
@@ -248,6 +242,7 @@ int main(int argc, char **argv) {
             /* Write info to file. */
             fprintf(fp, "%s : %s:%d %s\n%s : %d\n", buf, inet_ntoa(client.sin_addr), client.sin_port, requestMethod, requestURL, 200);
             fflush(fp);
+
 
             /* We should close the connection. */
             shutdown(connfd, SHUT_RDWR);
