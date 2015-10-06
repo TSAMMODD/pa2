@@ -274,13 +274,14 @@ int main(int argc, char **argv) {
                     //fprintf(stdout, "inside else \n");
                     //fflush(stdout);
                 }
+
+                shutdown(connfd, SHUT_RDWR);
                 //fprintf(stdout, "after ifs\n");
                 //fflush(stdout);
                 time(&elapsedTime);
             }
 
             /* Close the connection. */
-            shutdown(connfd, SHUT_RDWR);
             close(connfd);
             /* Close log file. */
             fclose(fp);
