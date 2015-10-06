@@ -72,7 +72,7 @@ void getHead(char message[], char head[]) {
 void handleGET(int connfd, char requestURL[], char ip_address[], int port) {
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
-    strcpy(body, "<!DOCTYPE>\n<html>\n<head></head>\n<body>\n");
+    strcpy(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
     strcat(body, requestURL);
     strcat(body, "\n");
     strcat(body, ip_address);
@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
             connfd = accept(sockfd, (struct sockaddr *) &client, &len);
 
 
-            while((elapsedTime - currTime) < CONNECTION_TIME) {
+ //           while((elapsedTime - currTime) < CONNECTION_TIME) {
                 fprintf(stdout, "Elapsed: %d\n", elapsedTime-currTime);
                 fflush(stdout);
 
@@ -255,7 +255,7 @@ int main(int argc, char **argv) {
 		fflush(stdout);
 
                 time(&elapsedTime);
-            }
+   //         }
             
 
             /* Close the connection. */
