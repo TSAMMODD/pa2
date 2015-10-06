@@ -54,7 +54,6 @@ void getRequestURL(char message[], char requestURL[]) {
 void getQuery(char requestURL[], char query[]) { 
     gchar** splitMessage = g_strsplit(requestURL, "?", MAX_TOKENS);
     strcpy(query, splitMessage[1]);
-    fprintf(stdout, "QUERYYY\n %s", query); 
     g_strfreev(splitMessage);
 }
 
@@ -86,6 +85,14 @@ void getHead(char message[], char head[]) {
 /*
  *
  */
+void getCookie(char message[], char cookie[]) {
+    // TODO !
+}
+
+
+/*
+ *
+ */
 void handleHEAD(char head[]) {
     time_t now;
     time(&now);
@@ -101,6 +108,28 @@ void handleHEAD(char head[]) {
     strcat(head, "\r\n");
 }
 
+/*
+ *
+ */
+void handleHEADWithCookie(char head[], char variable[], char value[]) {
+    time_t now;
+    time(&now);
+    char buf[sizeof "2011-10-08T07:07:09Z"];
+    strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
+    memset(head, 0, HEAD_LENGTH);
+    strcpy(head, "HTTP/1.1 200 OK\r\n");
+    strcat(head, "Date: ");
+    strcat(head, buf);
+    strcat(head, "\r\n");
+    strcat(head, "Server: jordanthor\r\n");
+    strcat(head, "Content-Type: text/html\r\n");
+    strcat(head, "Set-Cookie: ");
+    strcat(head, variable);
+    strcat(head, "=");
+    strcat(head, value);
+    strcat(head, "\r\n\r\n");
+}
+
 
 /*
  *
@@ -108,19 +137,31 @@ void handleHEAD(char head[]) {
 void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[], char variable[], char value[]) {
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
-    handleHEAD(head);
-    strcpy(body, head);
-    strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
+
     if(strchr(requestURL, '?') != NULL) {
         if(strcmp(variable, "bg") == 0) {
+            handleHEADWithCookie(head, variable, value);
+            strcpy(body, head), variable, value;
+            strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
             strcat(body, " style='background-color:");
             strcat(body, value);
             strcat(body, "'>\n");
         }
+        else {
+            handleHEAD(head);
+            strcpy(body, head);
+            strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
+        }
     }
     else {
-        strcat(body, ">\n");
+        handleHEAD(head);
+        strcpy(body, head);
+        strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
     }
+    
+    fprintf(stdout, "%s\n", head);
+    fflush(stdout);
+
     strcat(body, requestURL);
     strcat(body, "\n");
     strcat(body, ip_address);
