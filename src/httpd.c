@@ -49,6 +49,23 @@ void getRequestURL(char message[], char requestURL[]) {
 }
 
 /*
+ * 
+ */
+void getQuery(char requestURL[], char query[]) { 
+    gchar** splitMessage = g_strsplit(requestURL, "?", MAX_TOKENS);
+    strcpy(query, splitMessage[1]);
+    fprintf(stdout, "QUERYYY\n %s", query); 
+    g_strfreev(splitMessage);
+}
+
+void getParam(char query[], char variable[], char value[]) {
+    gchar** splitMessage = g_strsplit(query, "=", MAX_TOKENS);
+    strcpy(variable, splitMessage[0]);
+    strcpy(value, splitMessage[1]);
+    g_strfreev(splitMessage);
+}
+
+/*
  *
  */
 void getContent(char message[], char content[]) {
@@ -110,12 +127,22 @@ void handleHEAD(char head[]) {
 /*
  *
  */
-void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[]) {
+void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[], char variable[], char value[]) {
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
     handleHEAD(head);
     strcpy(body, head);
-    strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
+    strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
+    if(strchr(requestURL, '?') != NULL) {
+        if(strcmp(variable, "bg") == 0) {
+            strcat(body, " style='background-color:");
+            strcat(body, value);
+            strcat(body, "'>\n");
+        }
+    }
+    else {
+        strcat(body, ">\n");
+    }
     strcat(body, requestURL);
     strcat(body, "\n");
     strcat(body, ip_address);
@@ -161,10 +188,17 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     char requestURL[REQUEST_URL_LENGTH];
     char content[CONTENT_LENGTH];
     char head[HEAD_LENGTH];
+    char query[REQUEST_URL_LENGTH];
+    char variable[REQUEST_URL_LENGTH];
+    char value[REQUEST_URL_LENGTH];
+    
     memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
     memset(requestURL, 0, REQUEST_URL_LENGTH);
     memset(content, 0, CONTENT_LENGTH);
     memset(head, 0, HEAD_LENGTH);
+    memset(query, 0, REQUEST_URL_LENGTH);
+    memset(variable, 0, REQUEST_URL_LENGTH);
+    memset(value, 0, REQUEST_URL_LENGTH);
 
     strcpy(requestURL, "http://localhost/");
     strcat(requestURL, ip_address);
@@ -174,12 +208,15 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
     getRequestMethod(message, requestMethod);
     getRequestURL(message, requestURL);
-
+    if(strchr(requestURL, '?') != NULL) {
+        getQuery(requestURL, query);
+        getParam(query, variable, value);
+    }
 
     /* GET. */ 
     if(strcmp(requestMethod, "GET") == 0) {
         //handleHEAD(connfd);
-        handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, head);
+        handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, head, variable, value);
     }
     /* POST. */
     else if(strcmp(requestMethod, "POST") == 0) {
