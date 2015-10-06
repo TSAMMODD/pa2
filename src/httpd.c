@@ -98,7 +98,7 @@ void handleHEAD(char head[]) {
     strcat(head, "Date: ");
     strcat(head, buf);
     strcat(head, "\r\n");
-    strcat(head, "Server: ");
+    strcat(head, "Server: jordanthor\r\n");
     strcat(head, "Content-Type: text/html\r\n");
     strcat(head, "\r\n");
     //ssize_t n = HEAD_LENGTH;
