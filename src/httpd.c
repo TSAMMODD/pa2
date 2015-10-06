@@ -233,8 +233,8 @@ int main(int argc, char **argv) {
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
-            //time(&currTime);
-            //time(&elapsedTime);
+            time(&currTime);
+            time(&elapsedTime);
 
             /* Open file. */
             fp = fopen("src/httpd.log", "a+");
@@ -251,22 +251,19 @@ int main(int argc, char **argv) {
             fprintf(stdout, "connfd: %d\n", connfd);
             fflush(stdout);
 
-            //while((elapsedTime - currTime) < CONNECTION_TIME) {
-                /* Receive one byte less than declared,
-                   because it will be zero-termianted
-                   below. */
-            ssize_t n = read(connfd, message, sizeof(message));
 
-            //if(n > 0) {
+            //while((elapsedTime - currTime) < CONNECTION_TIME) {
+            //if(FD_ISSET(connfd, &rfds)) {
+            ssize_t n = read(connfd, message, sizeof(message));
             handler(connfd, client, fp, message, argv[1]);
-            //time(&currTime);
+            time(&currTime);
             //}
 
-            shutdown(connfd, SHUT_RDWR);
             time(&elapsedTime);
             //}
 
             /* Close the connection. */
+            shutdown(connfd, SHUT_RDWR);
             close(connfd);
             /* Close log file. */
             fclose(fp);
