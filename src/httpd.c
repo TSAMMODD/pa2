@@ -33,7 +33,6 @@
  */
 void getRequestMethod(char message[], char requestMethod[]) {
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
-    
     strcpy(requestMethod, (char*)splitMessage[0]);
     g_strfreev(splitMessage);
 }
@@ -43,7 +42,6 @@ void getRequestMethod(char message[], char requestMethod[]) {
  */
 void getRequestURL(char message[], char requestURL[]) {
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
-    
     strcat(requestURL, splitMessage[1]);
     g_strfreev(splitMessage);
 }
@@ -53,7 +51,6 @@ void getRequestURL(char message[], char requestURL[]) {
  */
 void getContent(char message[], char content[]) {
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
-
     strcat(content, splitMessage[1]);
     g_strfreev(splitMessage);
 }
@@ -63,9 +60,7 @@ void getContent(char message[], char content[]) {
  */
 void getHead(char message[], char head[]) {	
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
-    
     strcat(head, splitMessage[0]);
-    
     g_strfreev(splitMessage);
 }
 
@@ -117,7 +112,6 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
  *
  */
 void handleHEAD(int connfd, char head[]) {
-    
     ssize_t n = HEAD_LENGTH;
     write(connfd, head, (size_t) n);
 }
@@ -199,11 +193,11 @@ int main(int argc, char **argv) {
             char requestMethod[REQUEST_METHOD_LENGTH];
             char requestURL[REQUEST_URL_LENGTH];
             char content[CONTENT_LENGTH];
-	    char head[HEAD_LENGTH];
+            char head[HEAD_LENGTH];
             memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
             memset(requestURL, 0, REQUEST_URL_LENGTH);
             memset(content, 0, CONTENT_LENGTH);
-	    memset(head, 0, HEAD_LENGTH);
+            memset(head, 0, HEAD_LENGTH);
 
             strcpy(requestURL, "http://localhost/");
             strcat(requestURL, argv[1]);
@@ -222,16 +216,14 @@ int main(int argc, char **argv) {
             }
             /* POST. */
             else if(strcmp(requestMethod, "POST") == 0) {
-            	getContent(message, content);
-		handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content);
+                getContent(message, content);
+                handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content);
             }
             /* HEAD. */
             else if(strcmp(requestMethod, "HEAD") == 0) {
-                
-		fprintf(stdout, "%d", (ssize_t)sizeof(head));
-		getHead(message, head);
-		
-		handleHEAD(connfd, head);
+                fprintf(stdout, "%d", (ssize_t)sizeof(head));
+                getHead(message, head);
+                handleHEAD(connfd, head);
             }
             /* Error. */
             else {
@@ -244,7 +236,7 @@ int main(int argc, char **argv) {
             fprintf(fp, "%s : %s:%d %s\n%s : %d\n", buf, inet_ntoa(client.sin_addr), client.sin_port, requestMethod, requestURL, 200);
             fflush(fp);
 
-	    /* We should close the connection. */
+            /* We should close the connection. */
             shutdown(connfd, SHUT_RDWR);
             close(connfd);
             /* Close log file. */
