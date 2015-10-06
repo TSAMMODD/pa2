@@ -27,7 +27,7 @@
 #define PORT_LENGTH 6
 #define CONTENT_LENGTH 1000
 #define HEAD_LENGTH 1000
-#define CONNECTION_TIME 30
+#define CONNECTION_TIME 4
 
 /*
  *
@@ -117,9 +117,66 @@ void handleHEAD(int connfd, char head[]) {
     write(connfd, head, (size_t) n);
 }
 
+void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], char ip_address[]) {
+    /* Receive one byte less than declared,
+       because it will be zero-termianted
+       below. */
+    ssize_t n = read(connfd, message, sizeof(message) - 1);
+
+    /* Zero terminate the message, otherwise
+       printf may access memory outside of the
+       string. */
+    message[n] = '\0';
+
+    char requestMethod[REQUEST_METHOD_LENGTH];
+    char requestURL[REQUEST_URL_LENGTH];
+    char content[CONTENT_LENGTH];
+    char head[HEAD_LENGTH];
+    memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
+    memset(requestURL, 0, REQUEST_URL_LENGTH);
+    memset(content, 0, CONTENT_LENGTH);
+    memset(head, 0, HEAD_LENGTH);
+
+    strcpy(requestURL, "http://localhost/");
+    strcat(requestURL, ip_address);
+    time_t now;
+    time(&now);
+    char buf[sizeof "2011-10-08T07:07:09Z"];
+    strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+
+    getRequestMethod(message, requestMethod);
+    getRequestURL(message, requestURL);
+
+
+    /* GET. */ 
+    if(strcmp(requestMethod, "GET") == 0) {
+        handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port);
+    }
+    /* POST. */
+    else if(strcmp(requestMethod, "POST") == 0) {
+        getContent(message, content);
+        handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content);
+    }
+    /* HEAD. */
+    else if(strcmp(requestMethod, "HEAD") == 0) {
+        fprintf(stdout, "%d", (ssize_t)sizeof(head));
+        getHead(message, head);
+        handleHEAD(connfd, head);
+    }
+    /* Error. */
+    else {
+    }
+
+    /* Write info to screen. */
+    fprintf(stdout, "%s : %s:%d %s\n%s : %d\n", buf, inet_ntoa(client.sin_addr), client.sin_port, requestMethod, requestURL, 200);
+    fflush(stdout);
+    /* Write info to file. */
+    fprintf(fp, "%s : %s:%d %s\n%s : %d\n", buf, inet_ntoa(client.sin_addr), client.sin_port, requestMethod, requestURL, 200);
+    fflush(fp);
+}
+
 int main(int argc, char **argv) {
     FILE *fp;
-
     fprintf(stdout, "%d \n", argc);
     fflush(stdout);
 
@@ -184,67 +241,14 @@ int main(int argc, char **argv) {
                 fflush(stdout);
 
 
+
+
                 time(&elapsedTime);
             }
+            
+            handler(connfd, client, fp, message, argv[1]);
 
-            /* Receive one byte less than declared,
-               because it will be zero-termianted
-               below. */
-            ssize_t n = read(connfd, message, sizeof(message) - 1);
-
-            /* Zero terminate the message, otherwise
-               printf may access memory outside of the
-               string. */
-            message[n] = '\0';
-
-            char requestMethod[REQUEST_METHOD_LENGTH];
-            char requestURL[REQUEST_URL_LENGTH];
-            char content[CONTENT_LENGTH];
-            char head[HEAD_LENGTH];
-            memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
-            memset(requestURL, 0, REQUEST_URL_LENGTH);
-            memset(content, 0, CONTENT_LENGTH);
-            memset(head, 0, HEAD_LENGTH);
-
-            strcpy(requestURL, "http://localhost/");
-            strcat(requestURL, argv[1]);
-            time_t now;
-            time(&now);
-            char buf[sizeof "2011-10-08T07:07:09Z"];
-            strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
-
-            getRequestMethod(message, requestMethod);
-            getRequestURL(message, requestURL);
-
-
-            /* GET. */ 
-            if(strcmp(requestMethod, "GET") == 0) {
-                handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port);
-            }
-            /* POST. */
-            else if(strcmp(requestMethod, "POST") == 0) {
-                getContent(message, content);
-                handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content);
-            }
-            /* HEAD. */
-            else if(strcmp(requestMethod, "HEAD") == 0) {
-                fprintf(stdout, "%d", (ssize_t)sizeof(head));
-                getHead(message, head);
-                handleHEAD(connfd, head);
-            }
-            /* Error. */
-            else {
-            }
-
-            /* Write info to screen. */
-            fprintf(stdout, "%s : %s:%d %s\n%s : %d\n", buf, inet_ntoa(client.sin_addr), client.sin_port, requestMethod, requestURL, 200);
-            fflush(stdout);
-            /* Write info to file. */
-            fprintf(fp, "%s : %s:%d %s\n%s : %d\n", buf, inet_ntoa(client.sin_addr), client.sin_port, requestMethod, requestURL, 200);
-            fflush(fp);
-
-
-            /* We should close the connection. */
+            /* Close the connection. */
             shutdown(connfd, SHUT_RDWR);
             close(connfd);
             /* Close log file. */
