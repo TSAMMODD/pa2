@@ -236,11 +236,14 @@ int main(int argc, char **argv) {
                 /* Receive one byte less than declared,
                    because it will be zero-termianted
                    below. */
+		fprintf(stdout, "Before Read\n");
+                fflush(stdout);
                 ssize_t n = read(connfd, message, sizeof(message) - 1);
-
+		fprintf(stdout, "After Read\n");
+                fflush(stdout);
                 if(n > 0) {
-                    fprintf(stdout, "MESSAGE: %s \n", message);
-                    fflush(stdout);
+                    //fprintf(stdout, "Inside IF: %s \n", message);
+                    //fflush(stdout);
                     handler(connfd, client, fp, message, argv[1]);
                     time(&currTime);
                 }
@@ -248,6 +251,8 @@ int main(int argc, char **argv) {
                     fprintf(stdout, "inside else \n");
                     fflush(stdout);
                 }
+		fprintf(stdout, "after ifs\n");
+		fflush(stdout);
 
                 time(&elapsedTime);
             }
