@@ -85,26 +85,7 @@ void getHead(char message[], char head[]) {
 
 /*
  *
- *
-void handleHEAD(int connfd) {
-    time_t now;
-    time(&now);
-    char buf[sizeof "2011-10-08T07:07:09Z"];
-    strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
-    char head[HEAD_LENGTH];
-    memset(head, 0, HEAD_LENGTH);
-    strcat(head, "HTTP/1.1 200 OK\r\n");
-    strcat(head, "Date: ");
-    strcat(head, buf);
-    strcat(head, "\r\n");
-    strcat(head, "Server: ");
-    strcat(head, "Content-Type: text/html\r\n");
-    strcat(head, "\r\n");
-    ssize_t n = HEAD_LENGTH;
-    write(connfd, head, (size_t) n);
-}
-*/
-
+ */
 void handleHEAD(char head[]) {
     time_t now;
     time(&now);
@@ -118,9 +99,6 @@ void handleHEAD(char head[]) {
     strcat(head, "Server: jordanthor\r\n");
     strcat(head, "Content-Type: text/html\r\n");
     strcat(head, "\r\n");
-    //ssize_t n = HEAD_LENGTH;
-    //write(connfd, head, (size_t) n);
-    //return head;
 }
 
 
@@ -182,7 +160,9 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     write(connfd, body, (size_t) n);
 }
 
-
+/*
+ *
+ */
 void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], char ip_address[]) {
     char requestMethod[REQUEST_METHOD_LENGTH];
     char requestURL[REQUEST_URL_LENGTH];
@@ -290,8 +270,8 @@ int main(int argc, char **argv) {
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
-            time(&currTime);
-            time(&elapsedTime);
+            //time(&currTime);
+            //time(&elapsedTime);
 
             /* Open file. */
             fp = fopen("src/httpd.log", "a+");
@@ -305,37 +285,25 @@ int main(int argc, char **argv) {
             /* For TCP connectios, we first have to accept. */
             int connfd;
             connfd = accept(sockfd, (struct sockaddr *) &client, &len);
+            fprintf(stdout, "connfd: %d\n", connfd);
+            fflush(stdout);
 
-
-           // while((elapsedTime - currTime) < CONNECTION_TIME) {
-
+            //while((elapsedTime - currTime) < CONNECTION_TIME) {
                 /* Receive one byte less than declared,
                    because it will be zero-termianted
                    below. */
-		fprintf(stdout, "Before Read\n");
-                fflush(stdout);
-                ssize_t n = read(connfd, message, sizeof(message) - 1);
-		fprintf(stdout, "After Read\n");
-                fflush(stdout);
-                if(n > 0) {
-                    //fprintf(stdout, "Inside IF: %s \n", message);
-                    //fflush(stdout);
-                    handler(connfd, client, fp, message, argv[1]);
-                    time(&currTime);
-                }
-                else {
-                    fprintf(stdout, "inside else \n");
-                    fflush(stdout);
-                }
-		fprintf(stdout, "after ifs\n");
-		fflush(stdout);
+            ssize_t n = read(connfd, message, sizeof(message));
 
-                time(&elapsedTime);
-   //         }
-            
+            //if(n > 0) {
+            handler(connfd, client, fp, message, argv[1]);
+            //time(&currTime);
+            //}
+
+            shutdown(connfd, SHUT_RDWR);
+            time(&elapsedTime);
+            //}
 
             /* Close the connection. */
-            shutdown(connfd, SHUT_RDWR);
             close(connfd);
             /* Close log file. */
             fclose(fp);
