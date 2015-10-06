@@ -63,10 +63,9 @@ void getContent(char message[], char content[]) {
  */
 void getHead(char message[], char head[]) {	
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
-    fprintf(stdout, "getheadstart\n %s \n getheadend \n", splitMessage[0]);
+    
     strcat(head, splitMessage[0]);
-    fprintf(stdout, "head in gethead\n %s \n endofshit \n", head);
-    fflush(stdout);
+    
     g_strfreev(splitMessage);
 }
 
@@ -118,10 +117,8 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
  *
  */
 void handleHEAD(int connfd, char head[]) {
-    fprintf(stdout, "hellohello \n %s \n", head);
+    
     ssize_t n = HEAD_LENGTH;
-    fprintf(stdout, "here is n \n %d end\n", n);
-    fflush(stdout);
     write(connfd, head, (size_t) n);
 }
 
