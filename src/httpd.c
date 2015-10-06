@@ -29,6 +29,7 @@
 #define HEAD_LENGTH 1000
 #define CONNECTION_TIME 4
 #define MESSAGE_LENGTH 512
+#define COOKIE_LENGTH 100
 
 /*
  *
@@ -86,7 +87,15 @@ void getHead(char message[], char head[]) {
  *
  */
 void getCookie(char message[], char cookie[]) {
-    // TODO !
+    gchar** splitMessage = g_strsplit(message, "Cookie: ", MAX_TOKENS);
+    int i = 0;
+    for(; i < 10; i++) {
+        fprintf(stdout, "i : %d - %s \n", i, splitMessage[i]);
+        fflush(stdout);
+    }
+    
+    //strcat(cookie, splitMessage[0]);
+    g_strfreev(splitMessage);
 }
 
 
@@ -212,6 +221,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     char query[REQUEST_URL_LENGTH];
     char variable[REQUEST_URL_LENGTH];
     char value[REQUEST_URL_LENGTH];
+    char cookie[COOKIE_LENGTH];
     
     memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
     memset(requestURL, 0, REQUEST_URL_LENGTH);
@@ -220,6 +230,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     memset(query, 0, REQUEST_URL_LENGTH);
     memset(variable, 0, REQUEST_URL_LENGTH);
     memset(value, 0, REQUEST_URL_LENGTH);
+    memset(cookie, 0, COOKIE_LENGTH);
 
     strcpy(requestURL, "http://localhost/");
     strcat(requestURL, ip_address);
@@ -229,6 +240,8 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
     getRequestMethod(message, requestMethod);
     getRequestURL(message, requestURL);
+    getCookie(message, cookie);
+
     if(strchr(requestURL, '?') != NULL) {
         getQuery(requestURL, query);
         getParam(query, variable, value);
@@ -236,7 +249,6 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
 
     /* GET. */ 
     if(strcmp(requestMethod, "GET") == 0) {
-        //handleHEAD(connfd);
         handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, head, variable, value);
     }
     /* POST. */
@@ -246,9 +258,6 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     }
     /* HEAD. */
     else if(strcmp(requestMethod, "HEAD") == 0) {
-        //fprintf(stdout, "%d", (ssize_t)sizeof(head));
-        //getHead(message, head);
-        //handleHEAD(connfd);
         ssize_t n = HEAD_LENGTH;
         handleHEAD(head);
         write(connfd, head, (size_t) n);
