@@ -240,7 +240,12 @@ int main(int argc, char **argv) {
                 fprintf(stdout, "Elapsed: %d\n", elapsedTime-currTime);
                 fflush(stdout);
 
-
+                /*
+                if(FD_ISSET(connfd, &sockfd)) {
+                    fprintf(stdout, "This wont probably work. \n");
+                    fflush(stdout);
+                }
+                */ 
 
 
                 time(&elapsedTime);
