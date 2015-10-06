@@ -233,8 +233,8 @@ int main(int argc, char **argv) {
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
-            time(&currTime);
-            time(&elapsedTime);
+            //time(&currTime);
+            //time(&elapsedTime);
 
             /* Open file. */
             fp = fopen("src/httpd.log", "a+");
@@ -251,35 +251,20 @@ int main(int argc, char **argv) {
             fprintf(stdout, "connfd: %d\n", connfd);
             fflush(stdout);
 
-            while((elapsedTime - currTime) < CONNECTION_TIME) {
-                //fprintf(stdout, "elapsed time: %d\n", elapsedTime - currTime);
-                //fflush(stdout);
+            //while((elapsedTime - currTime) < CONNECTION_TIME) {
                 /* Receive one byte less than declared,
                    because it will be zero-termianted
                    below. */
-                //fprintf(stdout, "Before Read\n");
-                //fflush(stdout);
-                //ssize_t n = read(connfd, message, sizeof(message) - 1);
-                ssize_t n = recv(connfd, message, sizeof(message), 0);
-                //fprintf(stdout, "After Read\n");
-                //fflush(stdout);
+            ssize_t n = read(connfd, message, sizeof(message));
 
-                if(n > 0) {
-                    //fprintf(stdout, "Inside IF: %s \n", message);
-                    //fflush(stdout);
-                    handler(connfd, client, fp, message, argv[1]);
-                    time(&currTime);
-                }
-                else {
-                    //fprintf(stdout, "inside else \n");
-                    //fflush(stdout);
-                }
+            //if(n > 0) {
+            handler(connfd, client, fp, message, argv[1]);
+            //time(&currTime);
+            //}
 
-                shutdown(connfd, SHUT_RDWR);
-                //fprintf(stdout, "after ifs\n");
-                //fflush(stdout);
-                time(&elapsedTime);
-            }
+            shutdown(connfd, SHUT_RDWR);
+            time(&elapsedTime);
+            //}
 
             /* Close the connection. */
             close(connfd);
