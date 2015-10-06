@@ -125,7 +125,12 @@ int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
     char message[512];
-
+    time_t currTime;
+    time_t elapsedTime;
+    time( &elapsedTime );
+    time( &currTime );
+    fprintf(stdout, "\n%d\n", currTime);
+    fflush(stdout);
     /* Create and bind a UDP socket */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     memset(&server, 0, sizeof(server));
@@ -159,6 +164,14 @@ int main(int argc, char **argv) {
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
+	    time(&currTime);
+
+  	    time(&elapsedTime);
+	    while (elapsedTime-currTime < 30){
+		fprintf(stdout, "Elapsed: %d\n", elapsedTime-currTime);
+		fflush(stdout);
+		time(&elapsedTime);
+	    }
             /* Open file. */
             fp = fopen("src/httpd.log", "a+");
             
