@@ -78,11 +78,54 @@ void getHead(char message[], char head[]) {
 
 /*
  *
+ *
+void handleHEAD(int connfd) {
+    time_t now;
+    time(&now);
+    char buf[sizeof "2011-10-08T07:07:09Z"];
+    strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
+    char head[HEAD_LENGTH];
+    memset(head, 0, HEAD_LENGTH);
+    strcat(head, "HTTP/1.1 200 OK\r\n");
+    strcat(head, "Date: ");
+    strcat(head, buf);
+    strcat(head, "\r\n");
+    strcat(head, "Server: ");
+    strcat(head, "Content-Type: text/html\r\n");
+    strcat(head, "\r\n");
+    ssize_t n = HEAD_LENGTH;
+    write(connfd, head, (size_t) n);
+}
+*/
+
+void handleHEAD(char head[]) {
+    time_t now;
+    time(&now);
+    char buf[sizeof "2011-10-08T07:07:09Z"];
+    strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
+    memset(head, 0, HEAD_LENGTH);
+    strcpy(head, "HTTP/1.1 200 OK\r\n");
+    strcat(head, "Date: ");
+    strcat(head, buf);
+    strcat(head, "\r\n");
+    strcat(head, "Server: ");
+    strcat(head, "Content-Type: text/html\r\n");
+    strcat(head, "\r\n");
+    //ssize_t n = HEAD_LENGTH;
+    //write(connfd, head, (size_t) n);
+    //return head;
+}
+
+
+/*
+ *
  */
-void handleGET(int connfd, char requestURL[], char ip_address[], int port) {
+void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[]) {
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
-    strcpy(body, "<!DOCTYPE>\n<html>\n<head></head>\n<body>\n");
+    handleHEAD(head);
+    strcpy(body, head);
+    strcat(body, "<!DOCTYPE>\n<html>\n<head></head>\n<body>\n");
     strcat(body, requestURL);
     strcat(body, "\n");
     strcat(body, ip_address);
@@ -100,10 +143,12 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port) {
 /*
  *
  */
-void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char content[]) {
+void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char content[], char head[]) {
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
-    strcpy(body, "<!DOCTYPE>\n<html>\n<head></head>\n<body>\n");
+    handleHEAD(head);
+    strcpy(body, head);
+    strcat(body, "<!DOCTYPE>\n<html>\n<head></head>\n<body>\n");
     strcat(body, requestURL);
     strcat(body, "\n");
     strcat(body, ip_address);
@@ -120,13 +165,6 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     write(connfd, body, (size_t) n);
 }
 
-/*
- *
- */
-void handleHEAD(int connfd, char head[]) {
-    ssize_t n = HEAD_LENGTH;
-    write(connfd, head, (size_t) n);
-}
 
 void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], char ip_address[]) {
     /* Receive one byte less than declared,
@@ -148,15 +186,15 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     time_t now;
     time(&now);
     char buf[sizeof "2011-10-08T07:07:09Z"];
-    strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
-
+    strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
     getRequestMethod(message, requestMethod);
     getRequestURL(message, requestURL);
 
 
     /* GET. */ 
     if(strcmp(requestMethod, "GET") == 0) {
-        handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port);
+        //handleHEAD(connfd);
+        handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, head);
     }
     /* POST. */
     else if(strcmp(requestMethod, "POST") == 0) {
@@ -165,15 +203,19 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
         getContent(message, content);
         fprintf(stdout, "what3 \n");
         fflush(stdout);
-        handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content);
+        //handleHEAD(connfd);
+        handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content, head);
         fprintf(stdout, "what3 \n");
         fflush(stdout);
     }
     /* HEAD. */
     else if(strcmp(requestMethod, "HEAD") == 0) {
-        fprintf(stdout, "%d", (ssize_t)sizeof(head));
-        getHead(message, head);
-        handleHEAD(connfd, head);
+        //fprintf(stdout, "%d", (ssize_t)sizeof(head));
+        //getHead(message, head);
+        //handleHEAD(connfd);
+        ssize_t n = HEAD_LENGTH;
+        handleHEAD(head);
+        write(connfd, head, (size_t) n);
     }
     /* Error. */
     else {
@@ -250,8 +292,8 @@ int main(int argc, char **argv) {
             connfd = accept(sockfd, (struct sockaddr *) &client, &len);
 
             while((elapsedTime - currTime) < CONNECTION_TIME) {
-                fprintf(stdout, "Elapsed: %d\n", elapsedTime-currTime);
-                fflush(stdout);
+                //fprintf(stdout, "Elapsed: %d\n", elapsedTime-currTime);
+                //fflush(stdout);
 
                 /*
                 if(FD_ISSET(connfd, &sockfd)) {
