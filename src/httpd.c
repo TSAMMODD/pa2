@@ -28,6 +28,7 @@
 #define CONTENT_LENGTH 1000
 #define HEAD_LENGTH 1000
 #define CONNECTION_TIME 4
+#define MESSAGE_LENGTH 512
 
 /*
  *
@@ -51,9 +52,19 @@ void getRequestURL(char message[], char requestURL[]) {
  *
  */
 void getContent(char message[], char content[]) {
+    fprintf(stdout, "flot1\n");
+    fflush(stdout);
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
+    fprintf(stdout, "flot2\n");
+    fflush(stdout);
+    fprintf(stdout, "%s - %s\n", message, splitMessage[1]);
+    fflush(stdout);
     strcat(content, splitMessage[1]);
+    fprintf(stdout, "flot3\n");
+    fflush(stdout);
     g_strfreev(splitMessage);
+    fprintf(stdout, "flot4\n");
+    fflush(stdout);
 }
 
 /*
@@ -121,12 +132,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     /* Receive one byte less than declared,
        because it will be zero-termianted
        below. */
-    ssize_t n = read(connfd, message, sizeof(message) - 1);
-
-    /* Zero terminate the message, otherwise
-       printf may access memory outside of the
-       string. */
-    message[n] = '\0';
+    ssize_t n = read(connfd, message, MESSAGE_LENGTH - 1);
 
     char requestMethod[REQUEST_METHOD_LENGTH];
     char requestURL[REQUEST_URL_LENGTH];
@@ -154,8 +160,14 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     }
     /* POST. */
     else if(strcmp(requestMethod, "POST") == 0) {
+        fprintf(stdout, "what1 \n");
+        fflush(stdout);
         getContent(message, content);
+        fprintf(stdout, "what3 \n");
+        fflush(stdout);
         handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content);
+        fprintf(stdout, "what3 \n");
+        fflush(stdout);
     }
     /* HEAD. */
     else if(strcmp(requestMethod, "HEAD") == 0) {
@@ -182,7 +194,8 @@ int main(int argc, char **argv) {
 
     int sockfd;
     struct sockaddr_in server, client;
-    char message[512];
+    char message[MESSAGE_LENGTH];
+    memset(message, 0, MESSAGE_LENGTH);
     time_t currTime;
     time_t elapsedTime;
     time(&elapsedTime);
