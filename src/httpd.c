@@ -288,7 +288,6 @@ int main(int argc, char **argv) {
             fprintf(stdout, "connfd: %d\n", connfd);
             fflush(stdout);
 
-
             //while((elapsedTime - currTime) < CONNECTION_TIME) {
             //if(FD_ISSET(connfd, &rfds)) {
             ssize_t n = read(connfd, message, sizeof(message));
