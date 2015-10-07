@@ -98,8 +98,9 @@ void getContent(char message[], char content[]) {
     g_strfreev(splitMessage);
 }
 
-/*
- *
+/* A method that gets the header of a client request, i.e. everything before
+ * the double line break in the request that seperates the header lines
+ * and the actual content.
  */
 void getHead(char message[], char head[]) {	
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
@@ -107,8 +108,8 @@ void getHead(char message[], char head[]) {
     g_strfreev(splitMessage);
 }
 
-/*
- *
+/* A method that gets the cookie from the header in the client request,
+ * given that one exists.
  */
 void getCookie(char message[], char cookie[]) {
     gchar** splitMessage = g_strsplit(message, "Cookie: ", MAX_TOKENS);
@@ -119,7 +120,6 @@ void getCookie(char message[], char cookie[]) {
     else {
        cookie = NULL; 
     }
-
     g_strfreev(splitMessage);
 }
 
@@ -150,8 +150,8 @@ int getPersistence(char message[]) {
     return 0;
 }
 
-/*
- *
+/* A method that creates the header that we will send in our server response to the client.
+ * It includes the basic header fields Date, Server and Content-Type.
  */
 void handleHEAD(char head[]) {
     time_t now;
@@ -168,8 +168,9 @@ void handleHEAD(char head[]) {
     strcat(head, "\r\n");
 }
 
-/*
- *
+/* A method that creates the header that we will send in our server response to the client.
+ * It differs from the one above as it includes information on setting a cookie
+ * and is only called when we want to set a cookie for the client.
  */
 void handleHEADWithCookie(char head[], char variable[], char value[]) {
     time_t now;
