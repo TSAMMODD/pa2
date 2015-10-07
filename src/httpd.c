@@ -103,11 +103,11 @@ void getCookie(char message[], char cookie[]) {
 
     g_strfreev(splitMessage);
 }
-i
+
 /*
  *
  */
-int getPersistence(char message[]){
+int getPersistence(char message[]) {
     char head[HEAD_LENGTH];
     gchar** splitMessage;
     gchar** tmpSplitMessage;
