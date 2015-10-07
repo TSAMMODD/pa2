@@ -27,7 +27,7 @@
 #define PORT_LENGTH 6
 #define CONTENT_LENGTH 6000
 #define HEAD_LENGTH 1000
-#define CONNECTION_TIME 10
+#define CONNECTION_TIME 30
 #define MESSAGE_LENGTH 512
 #define COOKIE_LENGTH 1000
 #define MAX_NUMBER_OF_QUERIES 100
@@ -124,7 +124,24 @@ void getCookie(char message[], char cookie[]) {
     g_strfreev(splitMessage);
 }
 
+int getPersistence(char message[]){
+    char head[HEAD_LENGTH];
+    gchar** splitMessage;
+    getHead(message, head);
+    splitMessage = g_strsplit(message, "Connection: ", MAX_TOKENS);
+    
+    if(splitMessage[1] != NULL) {
+        fprintf(stdout, "\n\nKeep-Alive Maybe:l%sl\n\n", splitMessage[1]);
+        fflush(stdout);
+        if((strcmp(splitMessage[1], "keep-alive") == 0) ||(strcmp(splitMessage[1], "Keep-Alive") == 0)) { 
+            fprintf(stdout, "\n\nKeep-Alive HOT : %s\n\n", splitMessage[1]);
+            fflush(stdout);
+            return 1;
+        }
+    }
 
+    return 0;
+}
 /*
  *
  */
@@ -398,6 +415,8 @@ int main(int argc, char **argv) {
         /* Wait for five seconds. */
         tv.tv_sec = 5;
         tv.tv_usec = 0;
+        tv2.tv_sec = 0;
+        tv2.tv_usec = 100;
         retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
 
         if (retval == -1) {
@@ -417,14 +436,16 @@ int main(int argc, char **argv) {
 
             /* For TCP connectios, we first have to accept. */
             int connfd;
+            int keepAlive = 1;
             connfd = accept(sockfd, (struct sockaddr *) &client, &len);
-            while((elapsedTime - currTime) < CONNECTION_TIME) {
+            while((elapsedTime - currTime) < CONNECTION_TIME && keepAlive) {
             	FD_SET(connfd, &rfds);
-		        if(select(FD_SETSIZE,&rfds, NULL, NULL, &tv)) {
+		        if(select(FD_SETSIZE,&rfds, NULL, NULL, &tv2)) {
                                    
                     recv(connfd, message, sizeof(message), 0);
                     
 	        	    handler(connfd, client, fp, message, argv[1]);
+                    keepAlive = getPersistence(message);
         		    time(&currTime);
                     fprintf(stdout, "Resetting Time: %d\n", currTime);
                 }
