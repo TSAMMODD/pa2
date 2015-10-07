@@ -201,12 +201,41 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
 /*
  *
  */
-void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char content[], char head[]) {
+void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char content[], char head[], char variable[], char value[], char cookie[]) {
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
-    handleHEAD(head);
-    strcpy(body, head);
-    strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
+
+    if((strchr(requestURL, '?') != NULL) && strcmp(variable, "bg") == 0) {
+        handleHEADWithCookie(head, variable, value);
+        strcpy(body, head);
+        strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
+        strcat(body, " style='background-color:");
+        strcat(body, value);
+        strcat(body, "'>\n");
+    }
+    else {
+        if(cookie != NULL) {
+            getParam(cookie, variable, value);
+            //fprintf(stdout, "variable - value: %s -- %s \n", variable, value);
+            //fflush(stdout);
+            handleHEAD(head);
+            strcpy(body, head);
+            strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
+            strcat(body, " style='background-color:");
+            strcat(body, value);
+            strcat(body, "'>\n");
+        }
+        else {
+            handleHEAD(head);
+            strcpy(body, head);
+            strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
+        }
+    }
+
+    //handleHEAD(head);
+    //strcpy(body, head);
+    //strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
+
     strcat(body, "\t\t");
     strcat(body, requestURL);
     strcat(body, "\n\t\t");
@@ -268,7 +297,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     /* POST. */
     else if(strcmp(requestMethod, "POST") == 0) {
         getContent(message, content);
-        handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content, head);
+        handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content, head, variable, value, cookie);
     }
     /* HEAD. */
     else if(strcmp(requestMethod, "HEAD") == 0) {
@@ -296,7 +325,6 @@ int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
     char message[MESSAGE_LENGTH];
-    memset(message, 0, MESSAGE_LENGTH);
     time_t currTime;
     time_t elapsedTime;
     time(&elapsedTime);
@@ -321,6 +349,7 @@ int main(int argc, char **argv) {
         fd_set rfds;
         struct timeval tv;
         int retval;
+        memset(message, 0, MESSAGE_LENGTH);
 
         /* Check whether there is data on the socket fd. */
         FD_ZERO(&rfds);
