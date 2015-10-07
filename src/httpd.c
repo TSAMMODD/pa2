@@ -90,8 +90,13 @@ void getCookie(char message[], char cookie[]) {
     gchar** splitMessage = g_strsplit(message, "Cookie: ", MAX_TOKENS);
     int i = 0;
     for(; i < 10; i++) {
-        fprintf(stdout, "i : %d - %s \n", i, splitMessage[i]);
-        fflush(stdout);
+        if(splitMessage[i] != NULL){
+	    fprintf(stdout, "i : %d - %s \n", i, splitMessage[i]);
+            fflush(stdout);
+	}
+	else{
+	    break;
+	}
     }
     
     //strcat(cookie, splitMessage[0]);
