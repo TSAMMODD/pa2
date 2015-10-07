@@ -341,6 +341,7 @@ int main(int argc, char **argv) {
     for (;;) {
         fd_set rfds;
         struct timeval tv;
+        struct timeval tv2;
         int retval;
         memset(message, 0, MESSAGE_LENGTH);
 
@@ -349,7 +350,7 @@ int main(int argc, char **argv) {
         FD_SET(sockfd, &rfds);
 
         /* Wait for five seconds. */
-        tv.tv_sec = 1;
+        tv.tv_sec = 5;
         tv.tv_usec = 0;
         retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
 
