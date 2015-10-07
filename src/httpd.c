@@ -149,17 +149,6 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
 
-    /*
-    if(cookie == NULL) {
-        fprintf(stdout, "NULLL\n", cookie);
-        fflush(stdout);
-    }
-    else {
-        fprintf(stdout, "\n COOKIE: %s\n", cookie);
-        fflush(stdout);
-    }
-    */
-
     if((strchr(requestURL, '?') != NULL) && strcmp(variable, "bg") == 0) {
         handleHEADWithCookie(head, variable, value);
         strcpy(body, head);
