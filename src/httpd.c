@@ -72,8 +72,6 @@ void getParam(char query[], char variable[], char value[]) {
 void getContent(char message[], char content[]) {
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
     strcat(content, splitMessage[1]);
-    fprintf(stdout, "content - splitMessage[1] : %s -- %s \n\n", content, splitMessage[1]);
-    fflush(stdout);
     g_strfreev(splitMessage);
 }
 
@@ -358,8 +356,6 @@ int main(int argc, char **argv) {
             /* For TCP connectios, we first have to accept. */
             int connfd;
             connfd = accept(sockfd, (struct sockaddr *) &client, &len);
-            fprintf(stdout, "connfd: %d\n", connfd);
-            fflush(stdout);
 
             //while((elapsedTime - currTime) < CONNECTION_TIME) {
             //if(FD_ISSET(connfd, &rfds)) {
