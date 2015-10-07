@@ -27,7 +27,7 @@
 #define PORT_LENGTH 6
 #define CONTENT_LENGTH 6000
 #define HEAD_LENGTH 1000
-#define CONNECTION_TIME 4
+#define CONNECTION_TIME 10
 #define MESSAGE_LENGTH 512
 #define COOKIE_LENGTH 1000
 
@@ -356,7 +356,7 @@ int main(int argc, char **argv) {
         FD_SET(sockfd, &rfds);
 
         /* Wait for five seconds. */
-        tv.tv_sec = 5;
+        tv.tv_sec = 1;
         tv.tv_usec = 0;
         retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
 
@@ -370,7 +370,7 @@ int main(int argc, char **argv) {
             fp = fopen("src/httpd.log", "a+");
 
             /* Data is available, receive it. */
-            assert(FD_ISSET(sockfd, &rfds));
+            //assert(FD_ISSET(sockfd, &rfds));
 
             /* Copy to len, since recvfrom may change it. */
             socklen_t len = (socklen_t) sizeof(client);
@@ -378,16 +378,19 @@ int main(int argc, char **argv) {
             /* For TCP connectios, we first have to accept. */
             int connfd;
             connfd = accept(sockfd, (struct sockaddr *) &client, &len);
-
-            //while((elapsedTime - currTime) < CONNECTION_TIME) {
-            //if(FD_ISSET(connfd, &rfds)) {
-            ssize_t n = read(connfd, message, sizeof(message));
-            handler(connfd, client, fp, message, argv[1]);
-            time(&currTime);
-            //}
+            while((elapsedTime - currTime) < CONNECTION_TIME) {
+            	FD_SET(connfd, &rfds);
+		        if(select(FD_SETSIZE,&rfds, NULL, NULL, &tv)) {
+                                   
+                    recv(connfd, message, sizeof(message), 0);
+                    
+	        	    handler(connfd, client, fp, message, argv[1]);
+        		    time(&currTime);
+                    fprintf(stdout, "Resetting Time: %d\n", currTime);
+                }
 
             time(&elapsedTime);
-            //}
+            }
 
             /* Close the connection. */
             shutdown(connfd, SHUT_RDWR);
