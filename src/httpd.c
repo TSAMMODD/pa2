@@ -63,9 +63,13 @@ void getQuery(char requestURL[], char query[]) {
 /*
 void getParam(char query[], char variable[], char value[]) {
     gchar** splitMessage = g_strsplit(query, "=", MAX_TOKENS);
-    gchar** tempVal = g_strsplit_set(splitMessage[1], " \r\n", MAX_TOKENS);
-    strcpy(variable, splitMessage[0]);
-    strcpy(value, tempVal[0]);
+
+    if(splitMessage[1] != NULL) {
+        gchar** tempVal = g_strsplit_set(splitMessage[1], " \r\n", MAX_TOKENS);
+        strcpy(variable, splitMessage[0]);
+        strcpy(value, tempVal[0]);
+    }
+
     g_strfreev(splitMessage);
 }
 */
@@ -198,17 +202,17 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     fprintf(stdout, "%s\n", head);
     fflush(stdout);
 
-    strcat(body, "\t\t");
+    strcat(body, "\t<p>\n\t\t");
     strcat(body, requestURL);
-    strcat(body, "\n\t\t");
+    strcat(body, "<br>\n\t\t");
     strcat(body, ip_address);
-    strcat(body, "\n\t\t");
+    strcat(body, "<br>\n\t\t");
     char s_port[PORT_LENGTH];
     memset(s_port, 0, PORT_LENGTH);
     snprintf(s_port, PORT_LENGTH, "%d", port);
     strcat(body, s_port);
-    strcat(body, "\n");
-    strcat(body, "\t</body>\n</html>\n");
+    strcat(body, "<br>\n\t</p>\n");
+    strcat(body, "</body>\n</html>\n");
     ssize_t n =  sizeof(body) ;
     write(connfd, body, (size_t) n);
 }
@@ -216,25 +220,47 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
 /*
  *
  */
-void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char content[], char head[]) {
+void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char content[], char head[], char variable[], char value[], char cookie[]) {
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
-    handleHEAD(head);
-    strcpy(body, head);
-    strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
-    strcat(body, "\t\t");
+
+    if((strchr(requestURL, '?') != NULL) && strcmp(variable, "bg") == 0) {
+        handleHEADWithCookie(head, variable, value);
+        strcpy(body, head);
+        strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
+        strcat(body, " style='background-color:");
+        strcat(body, value);
+        strcat(body, "'>\n");
+    }
+    else {
+        if(cookie != NULL) {
+            getParam(cookie, variable, value);
+            handleHEAD(head);
+            strcpy(body, head);
+            strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
+            strcat(body, " style='background-color:");
+            strcat(body, value);
+            strcat(body, "'>\n");
+        }
+        else {
+            handleHEAD(head);
+            strcpy(body, head);
+            strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
+        }
+    }
+
+    strcat(body, "\t<p>\n\t\t");
     strcat(body, requestURL);
-    strcat(body, "\n\t\t");
+    strcat(body, "<br>\n\t\t");
     strcat(body, ip_address);
-    strcat(body, "\n\t\t");
+    strcat(body, "<br>\n\t\t");
     char s_port[PORT_LENGTH];
     memset(s_port, 0, PORT_LENGTH);
     snprintf(s_port, PORT_LENGTH, "%d", port);
     strcat(body, s_port);
-    strcat(body, "\t\t<p>");
+    strcat(body, "<br>\n\t</p>\n\t<p>\n\t\t");
     strcat(body, content);
-    strcat(body, "</p>\n");
-    strcat(body, "\t</body>\n</html>\n");
+    strcat(body, "<br>\n\t</p>\n</body>\n</html>\n");
     ssize_t n =  sizeof(body) ;
     write(connfd, body, (size_t) n);
 }
@@ -286,7 +312,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     /* POST. */
     else if(strcmp(requestMethod, "POST") == 0) {
         getContent(message, content);
-        handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content, head);
+        handlePOST(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, content, head, variable, value, cookie);
     }
     /* HEAD. */
     else if(strcmp(requestMethod, "HEAD") == 0) {
@@ -314,7 +340,6 @@ int main(int argc, char **argv) {
     int sockfd;
     struct sockaddr_in server, client;
     char message[MESSAGE_LENGTH];
-    memset(message, 0, MESSAGE_LENGTH);
     time_t currTime;
     time_t elapsedTime;
     time(&elapsedTime);
@@ -339,6 +364,7 @@ int main(int argc, char **argv) {
         fd_set rfds;
         struct timeval tv;
         int retval;
+        memset(message, 0, MESSAGE_LENGTH);
 
         /* Check whether there is data on the socket fd. */
         FD_ZERO(&rfds);
