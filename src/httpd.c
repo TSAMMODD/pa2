@@ -165,6 +165,8 @@ void handleHEAD(char head[]) {
     strcat(head, "\r\n");
     strcat(head, "Server: jordanthor\r\n");
     strcat(head, "Content-Type: text/html\r\n");
+    //strcat(head, "Content-Length: ");
+    //strcat(head, "200\r\n");
     strcat(head, "\r\n");
 }
 
@@ -184,6 +186,8 @@ void handleHEADWithCookie(char head[], char variable[], char value[]) {
     strcat(head, "\r\n");
     strcat(head, "Server: jordanthor\r\n");
     strcat(head, "Content-Type: text/html\r\n");
+    //strcat(head, "Content-Length: ");
+    //strcat(head, "200\r\n");
     strcat(head, "Set-Cookie: ");
     strcat(head, variable);
     strcat(head, "=");
@@ -267,8 +271,24 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     strcat(body, s_port);
     strcat(body, "<br>\n\t</p>\n");
     strcat(body, "</body>\n</html>\n");
-    ssize_t n =  sizeof(body) ;
-    write(connfd, body, (size_t) n);
+
+    gchar** splitMessage = g_strsplit(body, "\r\n\r\n", MAX_TOKENS);
+    char tmpBody[MAX_HTML_SIZE], newHead[MAX_HTML_SIZE], newBody[MAX_HTML_SIZE];
+    memset(tmpBody, 0, MAX_HTML_SIZE);
+    memset(newHead, 0, MAX_HTML_SIZE);
+    memset(newBody, 0, MAX_HTML_SIZE);
+    
+    strcpy(newHead, splitMessage[0]);
+    int length = strlen(splitMessage[1]);
+    strcat(newHead, "\r\nContent-Length: ");
+    char number[512];
+    sprintf(number, "%d", length);
+    strcat(newHead, number);
+    strcat(newHead, "\r\n\r\n");
+    strcpy(tmpBody, newHead);
+    strcat(tmpBody, splitMessage[1]);
+    ssize_t n = strlen(tmpBody);
+    write(connfd, tmpBody, (size_t) n);
 }
 
 /*
