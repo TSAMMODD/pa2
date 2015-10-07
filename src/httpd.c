@@ -23,9 +23,9 @@
 #define REQUEST_METHOD_LENGTH 8
 #define REQUEST_URL_LENGTH 100
 #define MAX_TOKENS -1
-#define MAX_HTML_SIZE 1000
+#define MAX_HTML_SIZE 99999
 #define PORT_LENGTH 6
-#define CONTENT_LENGTH 1000
+#define CONTENT_LENGTH 6000
 #define HEAD_LENGTH 1000
 #define CONNECTION_TIME 4
 #define MESSAGE_LENGTH 512
@@ -72,6 +72,8 @@ void getParam(char query[], char variable[], char value[]) {
 void getContent(char message[], char content[]) {
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
     strcat(content, splitMessage[1]);
+    fprintf(stdout, "content - splitMessage[1] : %s -- %s \n\n", content, splitMessage[1]);
+    fflush(stdout);
     g_strfreev(splitMessage);
 }
 
@@ -223,9 +225,9 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     memset(s_port, 0, PORT_LENGTH);
     snprintf(s_port, PORT_LENGTH, "%d", port);
     strcat(body, s_port);
-    strcat(body, "\n\t\t");
+    strcat(body, "\t\t<p>");
     strcat(body, content);
-    strcat(body, "\n");
+    strcat(body, "</p>\n");
     strcat(body, "\t</body>\n</html>\n");
     ssize_t n =  sizeof(body) ;
     write(connfd, body, (size_t) n);
