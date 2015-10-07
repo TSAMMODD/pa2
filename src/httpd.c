@@ -88,8 +88,9 @@ void getParam(char query[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LEN
 }
 
 
-/* A method that gets the content of the 
- *
+/* A method that is only called when the requested method from the client
+ * is a POST method. This method gets the string content that the user
+ * is posting to us which will be shown in the body of the requested site. 
  */
 void getContent(char message[], char content[]) {
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
