@@ -74,7 +74,7 @@ void getParam(char query[], char variable[], char value[]) {
 }
 */
 
-void getParam(char query[], char allQueries[][]) {
+void getParam(char query[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
     gchar** splitMessage = g_strsplit(query, "&", MAX_TOKENS);
     int i = 0;
     int j = 0;
@@ -182,14 +182,14 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     }
     else {
         if(cookie != NULL) {
-            getParam(cookie, variable, value);
-            fprintf(stdout, "variable - value: %s -- %s \n", variable, value);
-            fflush(stdout);
+            //getParam(cookie, variable, value);
+            //fprintf(stdout, "variable - value: %s -- %s \n", variable, value);
+            //fflush(stdout);
             handleHEAD(head);
             strcpy(body, head);
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
             strcat(body, " style='background-color:");
-            strcat(body, value);
+            //strcat(body, value);
             strcat(body, "'>\n");
         }
         else {
@@ -234,12 +234,12 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     }
     else {
         if(cookie != NULL) {
-            getParam(cookie, variable, value);
+            //getParam(cookie, variable, value);
             handleHEAD(head);
             strcpy(body, head);
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
             strcat(body, " style='background-color:");
-            strcat(body, value);
+            //strcat(body, value);
             strcat(body, "'>\n");
         }
         else {
