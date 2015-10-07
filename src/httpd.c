@@ -103,25 +103,34 @@ void getCookie(char message[], char cookie[]) {
 
     g_strfreev(splitMessage);
 }
-
+i
+/*
+ *
+ */
 int getPersistence(char message[]){
     char head[HEAD_LENGTH];
     gchar** splitMessage;
+    gchar** tmpSplitMessage;
     getHead(message, head);
-    splitMessage = g_strsplit(message, "Connection: ", MAX_TOKENS);
+    tmpSplitMessage = g_strsplit(message, "Connection: ", MAX_TOKENS);
+
+    fprintf(stdout, "Inside gerPer\n");
+    fflush(stdout);
     
-    if(splitMessage[1] != NULL) {
-        fprintf(stdout, "\n\nKeep-Alive Maybe:l%sl\n\n", splitMessage[1]);
-        fflush(stdout);
-        if((strcmp(splitMessage[1], "keep-alive") == 0) ||(strcmp(splitMessage[1], "Keep-Alive") == 0)) { 
-            fprintf(stdout, "\n\nKeep-Alive HOT : %s\n\n", splitMessage[1]);
-            fflush(stdout);
-            return 1;
+    if(tmpSplitMessage[1] != NULL) {
+        splitMessage = g_strsplit(tmpSplitMessage[1], "\n", MAX_TOKENS);
+        if(splitMessage[0] != NULL) {
+            if((strcmp(splitMessage[0], "keep-alive\r") == 0) ||(strcmp(splitMessage[0], "Keep-Alive\r") == 0)) { 
+                fprintf(stdout, "Keep-Alive: %s\n", splitMessage[0]);
+                fflush(stdout);
+                return 1;
+            }
         }
     }
 
     return 0;
 }
+
 /*
  *
  */
