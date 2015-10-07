@@ -88,18 +88,27 @@ void getHead(char message[], char head[]) {
  */
 void getCookie(char message[], char cookie[]) {
     gchar** splitMessage = g_strsplit(message, "Cookie: ", MAX_TOKENS);
+    
+    if(splitMessage[1] != NULL) {
+        strcat(cookie, splitMessage[1]);
+    }
+    else {
+       cookie = NULL; 
+    }
+    
+    /*
     int i = 0;
     for(; i < 10; i++) {
         if(splitMessage[i] != NULL){
-	    fprintf(stdout, "i : %d - %s \n", i, splitMessage[i]);
+            fprintf(stdout, "i : %d - %s \n", i, splitMessage[i]);
             fflush(stdout);
-	}
-	else{
-	    break;
-	}
+        }
+        else{
+            break;
+        }
     }
-    
-    //strcat(cookie, splitMessage[0]);
+    */
+
     g_strfreev(splitMessage);
 }
 
@@ -246,6 +255,8 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     getRequestMethod(message, requestMethod);
     getRequestURL(message, requestURL);
     getCookie(message, cookie);
+    fprintf(stdout, "\n COOKIE: %s \n\n", cookie);
+    fflush(stdout);
 
     if(strchr(requestURL, '?') != NULL) {
         getQuery(requestURL, query);
