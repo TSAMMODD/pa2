@@ -416,8 +416,8 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
 
 int main(int argc, char **argv) {
     FILE *fp;
-    fprintf(stdout, "%d \n", argc);
-    fflush(stdout);
+    fprintf(stderr, "%d \n", argc);
+    fflush(stderr);
 
     int sockfd;
     struct sockaddr_in server, client;
@@ -440,12 +440,11 @@ int main(int argc, char **argv) {
      * 1 connection to queue for simplicity.
      */
     listen(sockfd, 1);
-
-
+    int connfd = -1;
+    int once = 1;
     for (;;) {
         fd_set rfds;
         struct timeval tv;
-        struct timeval tv2;
         int retval;
         memset(message, 0, MESSAGE_LENGTH);
 
@@ -453,18 +452,27 @@ int main(int argc, char **argv) {
         FD_ZERO(&rfds);
         FD_SET(sockfd, &rfds);
 
+        if(connfd != -1){
+            FD_SET(connfd, &rfds);
+        }
+
         /* Wait for five seconds. */
         tv.tv_sec = 5;
         tv.tv_usec = 0;
-        tv2.tv_sec = 0;
-        tv2.tv_usec = 100;
-        retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
-
+        fprintf(stdout, "B4 Select connfd: %d\n", connfd);
+        fflush(stdout);
+        if(connfd != -1) {
+            retval = select(connfd+1, &rfds, NULL, NULL, &tv);
+        }
+        else {
+            retval = select(sockfd+1, &rfds, NULL, NULL, &tv);
+        }
+        
+        fprintf(stdout, "After Select ISSET: %d\n", FD_ISSET(sockfd, &rfds));
+        fflush(stdout);
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
-            time(&currTime);
-            time(&elapsedTime);
 
             /* Open file. */
             fp = fopen("src/httpd.log", "a+");
@@ -475,33 +483,34 @@ int main(int argc, char **argv) {
             /* Copy to len, since recvfrom may change it. */
             socklen_t len = (socklen_t) sizeof(client);
 
-            /* For TCP connectios, we first have to accept. */
-            int connfd;
-            int keepAlive = 1;
-            connfd = accept(sockfd, (struct sockaddr *) &client, &len);
-            while((elapsedTime - currTime) < CONNECTION_TIME && keepAlive) {
-            	FD_SET(connfd, &rfds);
-		        if(select(FD_SETSIZE,&rfds, NULL, NULL, &tv2)) {
-                                   
-                    recv(connfd, message, sizeof(message), 0);
-                    
-	        	    handler(connfd, client, fp, message, argv[1]);
-                    keepAlive = getPersistence(message);
-        		    time(&currTime);
-                    fprintf(stdout, "Resetting Time: %d\n", currTime);
-                }
-
-            time(&elapsedTime);
+              
+            if(FD_ISSET(sockfd, &rfds)){
+                connfd = accept(sockfd, (struct sockaddr *) &client, &len);
             }
+            
+            
+            FD_SET(connfd, &rfds);
+            
+            //FD_SET(connfd, &rfds);            
+            ssize_t n = read(connfd, message, sizeof(message)-1);
+            //message[n] = '\0';        
+            handler(connfd, client, fp, message, argv[1]);
+            
+            //FD_SET(connfd, &rfds);
+            //time(&elapsedTime);
+            
 
             /* Close the connection. */
-            shutdown(connfd, SHUT_RDWR);
-            close(connfd);
+            //shutdown(connfd, SHUT_RDWR);
+            //close(connfd);
             /* Close log file. */
             fclose(fp);
         } else {
             fprintf(stdout, "No message in five seconds.\n");
             fflush(stdout);
+            shutdown(connfd, SHUT_RDWR);
+            close(connfd);
+            connfd = -1;
         }
     }
 }
