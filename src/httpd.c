@@ -75,6 +75,8 @@ void getParam(char query[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LEN
     while(splitMessage[i] != NULL) {
         gchar** splitQuery = g_strsplit(splitMessage[i], "=", MAX_TOKENS);
         strcpy(allQueries[j], splitQuery[0]);
+        //If we have a weird query with no equal sign
+        //we don't try to access the value to the right of it.
         if(splitQuery[1] != NULL) {
             strcpy(allQueries[j+1], splitQuery[1]);
         }
