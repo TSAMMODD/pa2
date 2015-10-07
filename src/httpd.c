@@ -60,8 +60,6 @@ void getQuery(char requestURL[], char query[]) {
 
 void getParam(char query[], char variable[], char value[]) {
     gchar** splitMessage = g_strsplit(query, "=", MAX_TOKENS);
-    gchar** tempVal = g_strsplit(splitMessage[1], " ", MAX_TOKENS);
-    strcpy(variable, splitMessage[0]);
     strcpy(value, tempVal[0]);
     g_strfreev(splitMessage);
 }
@@ -96,19 +94,6 @@ void getCookie(char message[], char cookie[]) {
     else {
        cookie = NULL; 
     }
-    
-    /*
-    int i = 0;
-    for(; i < 10; i++) {
-        if(splitMessage[i] != NULL){
-            fprintf(stdout, "i : %d - %s \n", i, splitMessage[i]);
-            fflush(stdout);
-        }
-        else{
-            break;
-        }
-    }
-    */
 
     g_strfreev(splitMessage);
 }
@@ -162,6 +147,7 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
 
+    /*
     if(cookie == NULL) {
         fprintf(stdout, "NULLL\n", cookie);
         fflush(stdout);
@@ -170,6 +156,7 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
         fprintf(stdout, "\n COOKIE: %s\n", cookie);
         fflush(stdout);
     }
+    */
 
     if((strchr(requestURL, '?') != NULL) && strcmp(variable, "bg") == 0) {
         handleHEADWithCookie(head, variable, value);
