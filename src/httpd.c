@@ -214,18 +214,19 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     handleHEAD(head);
     strcpy(body, head);
     strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
+    strcat(body, "\t\t");
     strcat(body, requestURL);
-    strcat(body, "\n");
+    strcat(body, "\n\t\t");
     strcat(body, ip_address);
-    strcat(body, "\n");
+    strcat(body, "\n\t\t");
     char s_port[PORT_LENGTH];
     memset(s_port, 0, PORT_LENGTH);
     snprintf(s_port, PORT_LENGTH, "%d", port);
     strcat(body, s_port);
-    strcat(body, "\n");
+    strcat(body, "\n\t\t");
     strcat(body, content);
     strcat(body, "\n");
-    strcat(body, "</body>\n</html>\n");
+    strcat(body, "\t</body>\n</html>\n");
     ssize_t n =  sizeof(body) ;
     write(connfd, body, (size_t) n);
 }
