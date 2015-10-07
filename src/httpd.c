@@ -88,7 +88,7 @@ void getParam(char query[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LEN
 }
 
 
-/*
+/* A method that gets the content of the 
  *
  */
 void getContent(char message[], char content[]) {
@@ -217,21 +217,25 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
         strcat(body, "'>\n");
     }
     else {
-        if(cookie != NULL) {
+        if(strlen(cookie) > 0) {
             handleHEAD(head);
             strcpy(body, head);
+            strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
             int i = 0;
-            while(strlen(allQueries[i]) != 0) {
+            while(strlen(allQueries[i]) > 0) {
                 if(strcmp(allQueries[i], "bg") == 0) {
-                    strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body style='background-color:");
+                    strcat(body, " style='background-color:");
                     strcat(body, allQueries[i+1]);
-                    strcat(body, "'>\n");
+                    strcat(body, "'");
                     break;
                 }
                 i += 2;
             }
+            strcat(body, ">\n");
         }
         else {
+            fprintf(stdout, "HERE333");
+            fflush(stdout);
             handleHEAD(head);
             strcpy(body, head);
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
