@@ -60,20 +60,6 @@ void getQuery(char requestURL[], char query[]) {
     g_strfreev(splitMessage);
 }
 
-/*
-void getParam(char query[], char variable[], char value[]) {
-    gchar** splitMessage = g_strsplit(query, "=", MAX_TOKENS);
-
-    if(splitMessage[1] != NULL) {
-        gchar** tempVal = g_strsplit_set(splitMessage[1], " \r\n", MAX_TOKENS);
-        strcpy(variable, splitMessage[0]);
-        strcpy(value, tempVal[0]);
-    }
-
-    g_strfreev(splitMessage);
-}
-*/
-
 void getParam(char query[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
     gchar** splitMessage = g_strsplit(query, "&", MAX_TOKENS);
     int i = 0;
@@ -81,7 +67,9 @@ void getParam(char query[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LEN
     while(splitMessage[i] != NULL) {
         gchar** splitQuery = g_strsplit(splitMessage[i], "=", MAX_TOKENS);
         strcpy(allQueries[j], splitQuery[0]);
-        strcpy(allQueries[j+1], splitQuery[1]);
+        if(splitQuery[1] != NULL) {
+            strcpy(allQueries[j+1], splitQuery[1]);
+        }
         i += 1;
         j += 2; 
         g_strfreev(splitQuery);
@@ -245,10 +233,12 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     strcat(body, "<br>\n\t\t");
     if(cookie != NULL) {
         int j = 0;
-        while(strlen(allQueries[j]) != 0) {
+        while(strlen(allQueries[j]) > 0) {
             strcat(body, allQueries[j]);
-            strcat(body, "=");
-            strcat(body, allQueries[j+1]);
+            if(strlen(allQueries[j+1]) > 0) {
+                strcat(body, "=");
+                strcat(body, allQueries[j+1]);
+            }
             strcat(body, "<br>\n\t\t");
             j += 2;
         }
