@@ -43,7 +43,7 @@ void getRequestMethod(char message[], char requestMethod[]) {
 }
 
 /* A method that gets the second string from the request from
- * the client, which is the requested URL (i.e. /color)
+ * the client, which is the requested URL (i.e. "/color")
  */
 void getRequestURL(char message[], char requestURL[]) {
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
@@ -51,8 +51,9 @@ void getRequestURL(char message[], char requestURL[]) {
     g_strfreev(splitMessage);
 }
 
-/*
- * 
+/* A method that is only called when the requested URL from the client
+ * includes "?", which marks the beginning of a query (i.e. "?bg=red"). 
+ * This method gets the query string that comes after the question mark.
  */
 void getQuery(char requestURL[], char query[]) { 
     gchar** splitMessage = g_strsplit(requestURL, "?", MAX_TOKENS);
@@ -60,10 +61,17 @@ void getQuery(char requestURL[], char query[]) {
     g_strfreev(splitMessage);
 }
 
+/* A method that is only called when the requested URL includes a query.
+ * This method gets the query parameters and puts it in an array containing all parameters
+ * such that values at even positions in the array are values located left of the equation
+ * mark in the query and values at odd positions in the array are values located right of the 
+ * equation mark in the query.
+ * Example: If query is "?bg=red&ex=ample" then "bg" is at position 0 in the array,
+ * "red" is at position 1, "ex" at position 2 and so on.
+ */
 void getParam(char query[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
     gchar** splitMessage = g_strsplit(query, "&", MAX_TOKENS);
-    int i = 0;
-    int j = 0;
+    int i = 0, j = 0;
     while(splitMessage[i] != NULL) {
         gchar** splitQuery = g_strsplit(splitMessage[i], "=", MAX_TOKENS);
         strcpy(allQueries[j], splitQuery[0]);
