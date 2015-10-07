@@ -216,8 +216,6 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     else {
         if(cookie != NULL) {
             getParam(cookie, variable, value);
-            //fprintf(stdout, "variable - value: %s -- %s \n", variable, value);
-            //fflush(stdout);
             handleHEAD(head);
             strcpy(body, head);
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
@@ -232,23 +230,18 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
         }
     }
 
-    //handleHEAD(head);
-    //strcpy(body, head);
-    //strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
-
-    strcat(body, "\t\t");
+    strcat(body, "\t\t<p>\n\t\t\t");
     strcat(body, requestURL);
-    strcat(body, "\n\t\t");
+    strcat(body, "<br>\n\t\t\t");
     strcat(body, ip_address);
-    strcat(body, "\n\t\t");
+    strcat(body, "<br>\n\t\t\t");
     char s_port[PORT_LENGTH];
     memset(s_port, 0, PORT_LENGTH);
     snprintf(s_port, PORT_LENGTH, "%d", port);
     strcat(body, s_port);
-    strcat(body, "\t\t<p>");
+    strcat(body, "<br>\n\t\t</p>\n\t\t<p>\n\t\t\t");
     strcat(body, content);
-    strcat(body, "</p>\n");
-    strcat(body, "\t</body>\n</html>\n");
+    strcat(body, "<br>\n\t\t</p>\n\t</body>\n</html>\n");
     ssize_t n =  sizeof(body) ;
     write(connfd, body, (size_t) n);
 }
