@@ -84,6 +84,7 @@ void getParam(char query[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LEN
         strcpy(allQueries[j+1], splitQuery[1]);
         i += 1;
         j += 2; 
+        g_strfreev(splitQuery);
     }
     g_strfreev(splitMessage);
 }
@@ -168,11 +169,22 @@ void handleHEADWithCookie(char head[], char variable[], char value[]) {
 /*
  *
  */
-void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[], char variable[], char value[], char cookie[]) {
+void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[], char variable[], char value[], char cookie[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
-
-    if((strchr(requestURL, '?') != NULL) && strcmp(variable, "bg") == 0) {
+    int colorCookie = 0;
+    int i = 0;
+    while(strlen(allQueries[i]) != 0) {
+        if(strcmp(allQueries[i], "bg") == 0) {
+            strcpy(variable, allQueries[i]);
+            strcpy(value, allQueries[i+1]);
+            colorCookie = 1;
+            break;
+        }
+        i += 2;
+    }
+    
+    if((strchr(requestURL, '?') != NULL) && colorCookie == 1) {
         handleHEADWithCookie(head, variable, value);
         strcpy(body, head);
         strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
@@ -182,15 +194,19 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     }
     else {
         if(cookie != NULL) {
-            //getParam(cookie, variable, value);
-            //fprintf(stdout, "variable - value: %s -- %s \n", variable, value);
-            //fflush(stdout);
+            getParam(cookie, allQueries);
             handleHEAD(head);
             strcpy(body, head);
-            strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
-            strcat(body, " style='background-color:");
-            //strcat(body, value);
-            strcat(body, "'>\n");
+            int i = 0;
+            while(strlen(allQueries[i]) != 0) {
+                if(strcmp(allQueries[i], "bg") == 0) {
+                    strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body style='background-color:");
+                    strcat(body, allQueries[i+1]);
+                    strcat(body, "'>\n");
+                    break;
+                }
+                i += 2;
+            }
         }
         else {
             handleHEAD(head);
@@ -199,12 +215,20 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
         }
     }
     
-    fprintf(stdout, "%s\n", head);
-    fflush(stdout);
-
     strcat(body, "\t<p>\n\t\t");
     strcat(body, requestURL);
     strcat(body, "<br>\n\t\t");
+    if(cookie != NULL) {
+        getParam(cookie, allQueries);
+        int j = 0;
+        while(strlen(allQueries[j]) != 0) {
+            strcat(body, allQueries[j]);
+            strcat(body, "=");
+            strcat(body, allQueries[j+1]);
+            strcat(body, "<br>\n\t\t");
+            j += 2;
+        }
+    }
     strcat(body, ip_address);
     strcat(body, "<br>\n\t\t");
     char s_port[PORT_LENGTH];
@@ -287,7 +311,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     memset(variable, 0, REQUEST_URL_LENGTH);
     memset(value, 0, REQUEST_URL_LENGTH);
     memset(cookie, 0, COOKIE_LENGTH);
-    memset(allQueries, 0, sizeof(allQueries));
+    memset(allQueries, 0, sizeof(char) * MAX_NUMBER_OF_QUERIES * MAX_QUERY_LENGTH);
 
     strcpy(requestURL, "http://localhost/");
     strcat(requestURL, ip_address);
@@ -307,7 +331,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
 
     /* GET. */ 
     if(strcmp(requestMethod, "GET") == 0) {
-        handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, head, variable, value, cookie);
+        handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, head, variable, value, cookie, allQueries);
     }
     /* POST. */
     else if(strcmp(requestMethod, "POST") == 0) {
