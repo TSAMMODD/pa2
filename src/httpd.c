@@ -30,6 +30,8 @@
 #define CONNECTION_TIME 4
 #define MESSAGE_LENGTH 512
 #define COOKIE_LENGTH 1000
+#define MAX_NUMBER_OF_QUERIES 100
+#define MAX_QUERY_LENGTH 100
 
 /*
  *
@@ -58,6 +60,7 @@ void getQuery(char requestURL[], char query[]) {
     g_strfreev(splitMessage);
 }
 
+/*
 void getParam(char query[], char variable[], char value[]) {
     gchar** splitMessage = g_strsplit(query, "=", MAX_TOKENS);
     gchar** tempVal = g_strsplit_set(splitMessage[1], " \r\n", MAX_TOKENS);
@@ -65,6 +68,22 @@ void getParam(char query[], char variable[], char value[]) {
     strcpy(value, tempVal[0]);
     g_strfreev(splitMessage);
 }
+*/
+
+void getParam(char query[], char allQueries[][]) {
+    gchar** splitMessage = g_strsplit(query, "&", MAX_TOKENS);
+    int i = 0;
+    int j = 0;
+    while(splitMessage[i] != NULL) {
+        gchar** splitQuery = g_strsplit(splitMessage[i], "=", MAX_TOKENS);
+        strcpy(allQueries[j], splitQuery[0]);
+        strcpy(allQueries[j+1], splitQuery[1]);
+        i += 1;
+        j += 2; 
+    }
+    g_strfreev(splitMessage);
+}
+
 
 /*
  *
@@ -232,6 +251,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     char variable[REQUEST_URL_LENGTH];
     char value[REQUEST_URL_LENGTH];
     char cookie[COOKIE_LENGTH];
+    char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH];
     
     memset(requestMethod, 0, REQUEST_METHOD_LENGTH);
     memset(requestURL, 0, REQUEST_URL_LENGTH);
@@ -241,6 +261,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     memset(variable, 0, REQUEST_URL_LENGTH);
     memset(value, 0, REQUEST_URL_LENGTH);
     memset(cookie, 0, COOKIE_LENGTH);
+    memset(allQueries, 0, sizeof(allQueries));
 
     strcpy(requestURL, "http://localhost/");
     strcat(requestURL, ip_address);
@@ -254,7 +275,8 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
 
     if(strchr(requestURL, '?') != NULL) {
         getQuery(requestURL, query);
-        getParam(query, variable, value);
+        //getParam(query, variable, value);
+        getParam(query, allQueries);
     }
 
     /* GET. */ 
