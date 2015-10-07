@@ -183,17 +183,17 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     fprintf(stdout, "%s\n", head);
     fflush(stdout);
 
-    strcat(body, "\t\t");
+    strcat(body, "\t<p>\n\t\t");
     strcat(body, requestURL);
-    strcat(body, "\n\t\t");
+    strcat(body, "<br>\n\t\t");
     strcat(body, ip_address);
-    strcat(body, "\n\t\t");
+    strcat(body, "<br>\n\t\t");
     char s_port[PORT_LENGTH];
     memset(s_port, 0, PORT_LENGTH);
     snprintf(s_port, PORT_LENGTH, "%d", port);
     strcat(body, s_port);
-    strcat(body, "\n");
-    strcat(body, "\t</body>\n</html>\n");
+    strcat(body, "<br>\n\t</p>\n");
+    strcat(body, "</body>\n</html>\n");
     ssize_t n =  sizeof(body) ;
     write(connfd, body, (size_t) n);
 }
@@ -230,18 +230,18 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
         }
     }
 
-    strcat(body, "\t\t<p>\n\t\t\t");
+    strcat(body, "\t<p>\n\t\t");
     strcat(body, requestURL);
-    strcat(body, "<br>\n\t\t\t");
+    strcat(body, "<br>\n\t\t");
     strcat(body, ip_address);
-    strcat(body, "<br>\n\t\t\t");
+    strcat(body, "<br>\n\t\t");
     char s_port[PORT_LENGTH];
     memset(s_port, 0, PORT_LENGTH);
     snprintf(s_port, PORT_LENGTH, "%d", port);
     strcat(body, s_port);
-    strcat(body, "<br>\n\t\t</p>\n\t\t<p>\n\t\t\t");
+    strcat(body, "<br>\n\t</p>\n\t<p>\n\t\t");
     strcat(body, content);
-    strcat(body, "<br>\n\t\t</p>\n\t</body>\n</html>\n");
+    strcat(body, "<br>\n\t</p>\n</body>\n</html>\n");
     ssize_t n =  sizeof(body) ;
     write(connfd, body, (size_t) n);
 }
