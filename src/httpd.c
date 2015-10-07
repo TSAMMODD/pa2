@@ -60,8 +60,9 @@ void getQuery(char requestURL[], char query[]) {
 
 void getParam(char query[], char variable[], char value[]) {
     gchar** splitMessage = g_strsplit(query, "=", MAX_TOKENS);
+    gchar** tempVal = g_strsplit(splitMessage[1], " ", MAX_TOKENS);
     strcpy(variable, splitMessage[0]);
-    strcpy(value, splitMessage[1]);
+    strcpy(value, tempVal[0]);
     g_strfreev(splitMessage);
 }
 
