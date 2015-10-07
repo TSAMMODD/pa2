@@ -29,7 +29,7 @@
 #define HEAD_LENGTH 1000
 #define CONNECTION_TIME 4
 #define MESSAGE_LENGTH 512
-#define COOKIE_LENGTH 100
+#define COOKIE_LENGTH 1000
 
 /*
  *
