@@ -33,8 +33,8 @@
 #define MAX_NUMBER_OF_QUERIES 100
 #define MAX_QUERY_LENGTH 100
 
-/*
- *
+/* A method that gets the first string from the request from
+ * the client, which is the method of the request (i.e. GET, POST, HEAD, etc.)
  */
 void getRequestMethod(char message[], char requestMethod[]) {
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
@@ -42,8 +42,8 @@ void getRequestMethod(char message[], char requestMethod[]) {
     g_strfreev(splitMessage);
 }
 
-/*
- *
+/* A method that gets the second string from the request from
+ * the client, which is the requested URL (i.e. /color)
  */
 void getRequestURL(char message[], char requestURL[]) {
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
