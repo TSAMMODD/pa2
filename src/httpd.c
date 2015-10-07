@@ -157,29 +157,65 @@ void handleHEADWithCookie(char head[], char variable[], char value[]) {
 /*
  *
  */
-void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[], char variable[], char value[]) {
+void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[], char variable[], char value[], char cookie[]) {
     char body[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
+
+    if(cookie == NULL) {
+        fprintf(stdout, "NULLL\n", cookie);
+        fflush(stdout);
+    }
+    else {
+        fprintf(stdout, "\n COOKIE: %s\n", cookie);
+        fflush(stdout);
+    }
 
     if(strchr(requestURL, '?') != NULL) {
         if(strcmp(variable, "bg") == 0) {
             handleHEADWithCookie(head, variable, value);
-            strcpy(body, head), variable, value;
+            strcpy(body, head);
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
             strcat(body, " style='background-color:");
             strcat(body, value);
             strcat(body, "'>\n");
         }
         else {
+            if(cookie != NULL) {
+                getParam(cookie, variable, value);
+                fprintf(stdout, "variable - value: %s -- %s \n", variable, value);
+                fflush(stdout);
+                handleHEAD(head);
+                strcpy(body, head);
+                strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
+                strcat(body, " style='background-color:");
+                strcat(body, value);
+                strcat(body, "'>\n");
+            }
+            else {
+                handleHEAD(head);
+                strcpy(body, head);
+                strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
+            }
+        }
+    }
+    else {
+        if(cookie != NULL) {
+            getParam(cookie, variable, value);
+            fprintf(stdout, "variable - value: %s -- %s \n", variable, value);
+            fflush(stdout);
+            handleHEAD(head);
+            strcpy(body, head);
+            strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
+            strcat(body, " style='background-color:");
+            strcat(body, value);
+            strcat(body, "'>\n");
+
+        }
+        else {
             handleHEAD(head);
             strcpy(body, head);
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
         }
-    }
-    else {
-        handleHEAD(head);
-        strcpy(body, head);
-        strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
     }
     
     fprintf(stdout, "%s\n", head);
@@ -255,8 +291,6 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     getRequestMethod(message, requestMethod);
     getRequestURL(message, requestURL);
     getCookie(message, cookie);
-    fprintf(stdout, "\n COOKIE: %s \n\n", cookie);
-    fflush(stdout);
 
     if(strchr(requestURL, '?') != NULL) {
         getQuery(requestURL, query);
@@ -265,7 +299,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
 
     /* GET. */ 
     if(strcmp(requestMethod, "GET") == 0) {
-        handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, head, variable, value);
+        handleGET(connfd, requestURL, inet_ntoa(client.sin_addr), client.sin_port, head, variable, value, cookie);
     }
     /* POST. */
     else if(strcmp(requestMethod, "POST") == 0) {
