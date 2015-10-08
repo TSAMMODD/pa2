@@ -33,6 +33,15 @@
 #define MAX_NUMBER_OF_QUERIES 100
 #define MAX_QUERY_LENGTH 100
 
+/*
+ *
+ */
+struct Connection {
+    int connfd;
+    struct timeval tv;
+    int keepAlive;
+};
+
 /* A method that gets the first string from the request from
  * the client, which is the method of the request (i.e. GET, POST, HEAD, etc.)
  */
@@ -240,8 +249,6 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
             strcat(body, ">\n");
         }
         else {
-            fprintf(stdout, "HERE333");
-            fflush(stdout);
             handleHEAD(head);
             strcpy(body, head);
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
@@ -397,7 +404,11 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     time(&now);
     char buf[sizeof "2011-10-08T07:07:09Z"];
     strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
+    fprintf(stdout, "\n\nflot\n\n");
+    fflush(stdout);
     getRequestMethod(message, requestMethod);
+    fprintf(stdout, "\n\nflot2\n\n");
+    fflush(stdout);
     getRequestURL(message, requestURL);
     getCookie(message, cookie);
 
@@ -482,10 +493,10 @@ int main(int argc, char **argv) {
         fprintf(stdout, "B4 Select connfd: %d\n", connfd);
         fflush(stdout);
         if(connfd != -1) {
-            retval = select(connfd+1, &rfds, NULL, NULL, &tv);
+            retval = select(connfd + 1, &rfds, NULL, NULL, &tv);
         }
         else {
-            retval = select(sockfd+1, &rfds, NULL, NULL, &tv);
+            retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
         }
         
         fprintf(stdout, "After Select ISSET: %d\n", FD_ISSET(sockfd, &rfds));
@@ -493,7 +504,6 @@ int main(int argc, char **argv) {
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
-
             /* Open file. */
             fp = fopen("src/httpd.log", "a+");
 
@@ -503,22 +513,30 @@ int main(int argc, char **argv) {
             /* Copy to len, since recvfrom may change it. */
             socklen_t len = (socklen_t) sizeof(client);
 
-              
             if(FD_ISSET(sockfd, &rfds)){
                 connfd = accept(sockfd, (struct sockaddr *) &client, &len);
             }
             
-            
             FD_SET(connfd, &rfds);
             
-            //FD_SET(connfd, &rfds);            
-            ssize_t n = read(connfd, message, sizeof(message)-1);
+            ssize_t n = read(connfd, message, sizeof(message) - 1);
             //message[n] = '\0';        
-            handler(connfd, client, fp, message, argv[1]);
-            
+
+            if(strlen(message) > 0) {
+                if(getPersistence(message)) {
+
+                }
+
+                handler(connfd, client, fp, message, argv[1]);
+            }
+            else {
+                shutdown(connfd, SHUT_RDWR);
+                close(connfd);
+                connfd = -1;
+            }
+
             //FD_SET(connfd, &rfds);
             //time(&elapsedTime);
-            
 
             /* Close the connection. */
             //shutdown(connfd, SHUT_RDWR);
