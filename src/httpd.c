@@ -27,16 +27,17 @@
 #define PORT_LENGTH 6
 #define CONTENT_LENGTH 6000
 #define HEAD_LENGTH 1000
-#define CONNECTION_TIME 30
+#define CONNECTION_TIME 10
 #define MESSAGE_LENGTH 512
 #define COOKIE_LENGTH 1000
 #define MAX_NUMBER_OF_QUERIES 100
 #define MAX_QUERY_LENGTH 100
+#define NUMBER_OF_CONNECTIONS 5
 
 /*
  *
  */
-struct Connection {
+struct connection {
     int connfd;
     struct timeval tv;
     int keepAlive;
@@ -471,8 +472,12 @@ int main(int argc, char **argv) {
      * 1 connection to queue for simplicity.
      */
     listen(sockfd, 1);
-    int connfd = -1;
-    int once = 1;
+    struct connection conn;
+    conn.connfd = -1;    
+    conn.tv.tv_sec = CONNECTION_TIME; 
+    conn.tv.tv_usec = 0;
+    conn.keepAlive = 0;
+    
     for (;;) {
         fd_set rfds;
         struct timeval tv;
@@ -483,24 +488,24 @@ int main(int argc, char **argv) {
         FD_ZERO(&rfds);
         FD_SET(sockfd, &rfds);
 
-        if(connfd != -1){
-            FD_SET(connfd, &rfds);
-        }
-
         /* Wait for five seconds. */
         tv.tv_sec = 5;
         tv.tv_usec = 0;
-        fprintf(stdout, "B4 Select connfd: %d\n", connfd);
+        fprintf(stdout, "B4 Select connfd: %d\n", conn.connfd);
         fflush(stdout);
-        if(connfd != -1) {
-            retval = select(connfd + 1, &rfds, NULL, NULL, &tv);
+
+        if(conn.connfd != -1) {
+            FD_SET(conn.connfd, &rfds);
+            retval = select(conn.connfd + 1, &rfds, NULL, NULL, &tv);
         }
         else {
             retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
         }
-        
-        fprintf(stdout, "After Select ISSET: %d\n", FD_ISSET(sockfd, &rfds));
+
+        fprintf(stdout, "retval: %d \n\n", retval);
         fflush(stdout);
+        sleep(2);
+        
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
@@ -513,42 +518,38 @@ int main(int argc, char **argv) {
             /* Copy to len, since recvfrom may change it. */
             socklen_t len = (socklen_t) sizeof(client);
 
-            if(FD_ISSET(sockfd, &rfds)){
-                connfd = accept(sockfd, (struct sockaddr *) &client, &len);
+            if(FD_ISSET(sockfd, &rfds)) {
+                conn.connfd = accept(sockfd, (struct sockaddr *) &client, &len);
+                FD_SET(conn.connfd, &rfds);
             }
             
-            FD_SET(connfd, &rfds);
-            
-            ssize_t n = read(connfd, message, sizeof(message) - 1);
-            //message[n] = '\0';        
+            ssize_t n = read(conn.connfd, message, sizeof(message) - 1);
+            message[n] = '\0';        
 
+            //if(FD_ISSET(conn.connfd, &rfds)) {    
             if(strlen(message) > 0) {
-                if(getPersistence(message)) {
-
-                }
-
-                handler(connfd, client, fp, message, argv[1]);
+                conn.keepAlive = getPersistence(message);
+                handler(conn.connfd, client, fp, message, argv[1]);
             }
             else {
-                shutdown(connfd, SHUT_RDWR);
-                close(connfd);
-                connfd = -1;
+                shutdown(conn.connfd, SHUT_RDWR);
+                close(conn.connfd);
+                conn.connfd = -1;
             }
 
-            //FD_SET(connfd, &rfds);
-            //time(&elapsedTime);
+            if(!conn.keepAlive) {
+                shutdown(conn.connfd, SHUT_RDWR);
+                close(conn.connfd);
+                conn.connfd = -1;
+            }
 
-            /* Close the connection. */
-            //shutdown(connfd, SHUT_RDWR);
-            //close(connfd);
-            /* Close log file. */
             fclose(fp);
         } else {
             fprintf(stdout, "No message in five seconds.\n");
             fflush(stdout);
-            shutdown(connfd, SHUT_RDWR);
-            close(connfd);
-            connfd = -1;
+            shutdown(conn.connfd, SHUT_RDWR);
+            close(conn.connfd);
+            conn.connfd = -1;
         }
     }
 }
