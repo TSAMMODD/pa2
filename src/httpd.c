@@ -526,6 +526,8 @@ int main(int argc, char **argv) {
             socklen_t len = (socklen_t) sizeof(client);
 
             if(FD_ISSET(sockfd, &rfds)) {
+                fprintf(stdout, "inside accept :/\n\n");
+                fflush(stdout);
                 conn.connfd = accept(sockfd, (struct sockaddr *) &client, &len);
                 time(&conn.startTime);
             }
@@ -540,11 +542,14 @@ int main(int argc, char **argv) {
             }
 
             if(conn.keepAlive == 0) {
-                fprintf(stdout, "\n\nCLOSING HERE!\n\n");
+                fprintf(stdout, "\n\nBefor closing!\n\n");
                 fflush(stdout);
+                sleep(2);
                 shutdown(conn.connfd, SHUT_RDWR);
                 close(conn.connfd);
                 conn.connfd = -1;
+                fprintf(stdout, "\n\nAfter closing!\n\n");
+                fflush(stdout);
             }
 
             fclose(fp);
