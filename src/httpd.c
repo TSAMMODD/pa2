@@ -177,8 +177,10 @@ void typeOfConnection(char message[], char type[]) {
     }
 }
 
-/*
- *
+/* Method that tells if a client requested a persistence connection or not.
+ * If the request contains HTTP/1.1 the requested connection is persistence but
+ * if that does not apply than we have to search for a "Connection: keep-alive"
+ * message in the header from the client.
  */
 int getPersistence(char message[]) {
     char head[HEAD_LENGTH];
