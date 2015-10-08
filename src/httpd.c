@@ -163,7 +163,7 @@ int getPersistence(char message[]) {
 /* A method that creates the header that we will send in our server response to the client.
  * It includes the basic header fields Date, Server and Content-Type.
  */
-void handleHEAD(char head[]) {
+void handleHEAD(char head[], int sizeOfBody) {
     time_t now;
     time(&now);
     char buf[sizeof "2011-10-08T07:07:09Z"];
@@ -175,16 +175,18 @@ void handleHEAD(char head[]) {
     strcat(head, "\r\n");
     strcat(head, "Server: jordanthor\r\n");
     strcat(head, "Content-Type: text/html\r\n");
-    //strcat(head, "Content-Length: ");
-    //strcat(head, "200\r\n");
-    strcat(head, "\r\n");
+    strcat(head, "Content-Length: ");
+    char s_sizeOfBody[512];
+    sprintf(s_sizeOfBody, "%d", sizeOfBody);
+    strcat(head, s_sizeOfBody);
+    strcat(head, "\r\n\r\n");
 }
 
 /* A method that creates the header that we will send in our server response to the client.
  * It differs from the one above as it includes information on setting a cookie
  * and is only called when we want to set a cookie for the client.
  */
-void handleHEADWithCookie(char head[], char variable[], char value[]) {
+void handleHEADWithCookie(char head[], char variable[], char value[], int sizeOfBody) {
     time_t now;
     time(&now);
     char buf[sizeof "2011-10-08T07:07:09Z"];
@@ -196,9 +198,11 @@ void handleHEADWithCookie(char head[], char variable[], char value[]) {
     strcat(head, "\r\n");
     strcat(head, "Server: jordanthor\r\n");
     strcat(head, "Content-Type: text/html\r\n");
-    //strcat(head, "Content-Length: ");
-    //strcat(head, "200\r\n");
-    strcat(head, "Set-Cookie: ");
+    strcat(head, "Content-Length: ");
+    char s_sizeOfBody[512];
+    sprintf(s_sizeOfBody, "%d", sizeOfBody);
+    strcat(head, s_sizeOfBody);
+    strcat(head, "\r\nSet-Cookie: ");
     strcat(head, variable);
     strcat(head, "=");
     strcat(head, value);
@@ -210,10 +214,12 @@ void handleHEADWithCookie(char head[], char variable[], char value[]) {
  *
  */
 void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[], char variable[], char value[], char cookie[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
-    char body[MAX_HTML_SIZE];
-    memset(body, 0, MAX_HTML_SIZE);
     int colorCookie = 0;
     int i = 0;
+    char body[MAX_HTML_SIZE], result[MAX_HTML_SIZE];
+    memset(body, 0, MAX_HTML_SIZE);
+    memset(result, 0, MAX_HTML_SIZE);
+
     while(strlen(allQueries[i]) != 0) {
         if(strcmp(allQueries[i], "bg") == 0) {
             strcpy(variable, allQueries[i]);
@@ -225,8 +231,6 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     }
     
     if((strchr(requestURL, '?') != NULL) && colorCookie == 1) {
-        handleHEADWithCookie(head, variable, value);
-        strcpy(body, head);
         strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
         strcat(body, " style='background-color:");
         strcat(body, value);
@@ -234,8 +238,6 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     }
     else {
         if(strlen(cookie) > 0) {
-            handleHEAD(head);
-            strcpy(body, head);
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
             int i = 0;
             while(strlen(allQueries[i]) > 0) {
@@ -250,8 +252,6 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
             strcat(body, ">\n");
         }
         else {
-            handleHEAD(head);
-            strcpy(body, head);
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
         }
     }
@@ -259,18 +259,22 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     strcat(body, "\t<p>\n\t\t");
     strcat(body, requestURL);
     strcat(body, "<br>\n\t\t");
+
     if(cookie != NULL) {
         int j = 0;
         while(strlen(allQueries[j]) > 0) {
             strcat(body, allQueries[j]);
+
             if(strlen(allQueries[j+1]) > 0) {
                 strcat(body, "=");
                 strcat(body, allQueries[j+1]);
             }
+
             strcat(body, "<br>\n\t\t");
             j += 2;
         }
     }
+
     strcat(body, ip_address);
     strcat(body, "<br>\n\t\t");
     char s_port[PORT_LENGTH];
@@ -280,33 +284,32 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     strcat(body, "<br>\n\t</p>\n");
     strcat(body, "</body>\n</html>\n");
 
-    gchar** splitMessage = g_strsplit(body, "\r\n\r\n", MAX_TOKENS);
-    char tmpBody[MAX_HTML_SIZE], newHead[MAX_HTML_SIZE], newBody[MAX_HTML_SIZE];
-    memset(tmpBody, 0, MAX_HTML_SIZE);
-    memset(newHead, 0, MAX_HTML_SIZE);
-    memset(newBody, 0, MAX_HTML_SIZE);
-    
-    strcpy(newHead, splitMessage[0]);
-    int length = strlen(splitMessage[1]);
-    strcat(newHead, "\r\nContent-Length: ");
-    char number[512];
-    sprintf(number, "%d", length);
-    strcat(newHead, number);
-    strcat(newHead, "\r\n\r\n");
-    strcpy(tmpBody, newHead);
-    strcat(tmpBody, splitMessage[1]);
-    ssize_t n = strlen(tmpBody);
-    write(connfd, tmpBody, (size_t) n);
+    int sizeOfBody = strlen(body);
+ 
+    if((strchr(requestURL, '?') != NULL) && colorCookie == 1) {
+        handleHEADWithCookie(head, variable, value, sizeOfBody);
+    }
+    else {
+        handleHEADWithCookie(head, variable, value, sizeOfBody);
+    }
+
+    strcpy(result, head);
+    strcat(result, body);
+    ssize_t n = strlen(result);
+
+    write(connfd, result, (size_t) n);
 }
 
 /*
  *
  */
 void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char content[], char head[], char variable[], char value[], char cookie[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
-    char body[MAX_HTML_SIZE];
-    memset(body, 0, MAX_HTML_SIZE);
     int colorCookie = 0;
     int i = 0;
+    char body[MAX_HTML_SIZE], result[MAX_HTML_SIZE];
+    memset(body, 0, MAX_HTML_SIZE);
+    memset(result, 0, MAX_HTML_SIZE);
+
     while(strlen(allQueries[i]) != 0) {
         if(strcmp(allQueries[i], "bg") == 0) {
             strcpy(variable, allQueries[i]);
@@ -314,12 +317,11 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
             colorCookie = 1;
             break;
         }
+
         i += 2;
     }
     
     if((strchr(requestURL, '?') != NULL) && colorCookie == 1) {
-        handleHEADWithCookie(head, variable, value);
-        strcpy(body, head);
         strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
         strcat(body, " style='background-color:");
         strcat(body, value);
@@ -327,10 +329,9 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     }
     else { 
         if(strlen(cookie) > 0) {
-            handleHEAD(head);
-            strcpy(body, head);
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
             int i = 0;
+
             while(strlen(allQueries[i]) != 0) {
                 if(strcmp(allQueries[i], "bg") == 0) {
                     strcat(body, " style='background-color:");
@@ -338,13 +339,12 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
                     strcat(body, "'");
                     break;
                 }
+
                 i += 2;
             }
             strcat(body, ">\n");
         }
         else {
-            handleHEAD(head);
-            strcpy(body, head);
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body>\n");
         }
     }
@@ -352,6 +352,7 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     strcat(body, "\t<p>\n\t\t");
     strcat(body, requestURL);
     strcat(body, "<br>\n\t\t");
+
     if(cookie != NULL) {
         int j = 0;
         while(strlen(allQueries[j]) != 0) {
@@ -362,6 +363,7 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
             j += 2;
         }
     }
+
     strcat(body, ip_address);
     strcat(body, "<br>\n\t\t");
     char s_port[PORT_LENGTH];
@@ -371,8 +373,21 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     strcat(body, "<br>\n\t</p>\n\t<p>\n\t\t");
     strcat(body, content);
     strcat(body, "<br>\n\t</p>\n</body>\n</html>\n");
-    ssize_t n =  sizeof(body) ;
-    write(connfd, body, (size_t) n);
+
+    int sizeOfBody = strlen(body);
+ 
+    if((strchr(requestURL, '?') != NULL) && colorCookie == 1) {
+        handleHEADWithCookie(head, variable, value, sizeOfBody);
+    }
+    else {
+        handleHEADWithCookie(head, variable, value, sizeOfBody);
+    }
+
+    strcpy(result, head);
+    strcat(result, body);
+    ssize_t n = strlen(result);
+
+    write(connfd, result, (size_t) n);
 }
 
 /*
@@ -431,7 +446,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     /* HEAD. */
     else if(strcmp(requestMethod, "HEAD") == 0) {
         ssize_t n = HEAD_LENGTH;
-        handleHEAD(head);
+        handleHEAD(head, 0);
         write(connfd, head, (size_t) n);
     }
     /* Error. */
