@@ -506,8 +506,6 @@ int main(int argc, char **argv) {
         /* Wait for five seconds. */
         tv.tv_sec = 5;
         tv.tv_usec = 0;
-        fprintf(stdout, "B4 Select connfd: %d\n", conn.connfd);
-        fflush(stdout);
 
         if(conn.connfd != -1) {
             FD_SET(conn.connfd, &rfds);
@@ -517,9 +515,7 @@ int main(int argc, char **argv) {
             retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
         }
 
-        fprintf(stdout, "retval: %d \n\n", retval);
-        fflush(stdout);
-        sleep(2);
+        //sleep(2);
         
         if (retval == -1) {
             perror("select()");
