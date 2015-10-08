@@ -23,16 +23,16 @@
 /* Macros */
 #define REQUEST_METHOD_LENGTH 8
 #define REQUEST_URL_LENGTH 100
-#define MAX_TOKENS -1
-#define MAX_HTML_SIZE 99999
-#define PORT_LENGTH 6
 #define CONTENT_LENGTH 6000
-#define HEAD_LENGTH 1000
-#define CONNECTION_TIME 10
+#define PORT_LENGTH 6
+#define MAX_QUERY_LENGTH 100
 #define MESSAGE_LENGTH 512
 #define COOKIE_LENGTH 1000
+#define MAX_HTML_LENGTH 99999
+#define HEAD_LENGTH 1000
+#define MAX_TOKENS -1
+#define CONNECTION_TIME 10
 #define MAX_NUMBER_OF_QUERIES 100
-#define MAX_QUERY_LENGTH 100
 #define NUMBER_OF_CONNECTIONS 5
 
 /* A struct containing information about a connection, that is its file descriptor, 
@@ -184,9 +184,9 @@ void typeOfConnection(char message[], char type[]) {
  */
 int getPersistence(char message[]) {
     char head[HEAD_LENGTH];
-    char type[512];
+    char type[MESSAGE_LENGTH];
     memset(head, 0, HEAD_LENGTH);
-    memset(type, 0, 512);
+    memset(type, 0, MESSAGE_LENGTH);
     typeOfConnection(message, type);
 
     if((type != NULL) && (strcmp(type, "HTTP/1.1\r") == 0)) {
@@ -274,9 +274,9 @@ void handleHEADWithCookie(char head[], char variable[], char value[], int sizeOf
 void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[], char variable[], char value[], char cookie[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
     int colorCookie = 0;
     int i = 0;
-    char body[MAX_HTML_SIZE], result[MAX_HTML_SIZE];
-    memset(body, 0, MAX_HTML_SIZE);
-    memset(result, 0, MAX_HTML_SIZE);
+    char body[MAX_HTML_LENGTH], result[MAX_HTML_LENGTH];
+    memset(body, 0, MAX_HTML_LENGTH);
+    memset(result, 0, MAX_HTML_LENGTH);
 
     while(strlen(allQueries[i]) != 0) {
         if(strcmp(allQueries[i], "bg") == 0) {
@@ -369,9 +369,9 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
  * allQueries (an array of all query parameters, described above in the getParam function).
  */
 void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char content[], char head[], char variable[], char value[], char cookie[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
-    char body[MAX_HTML_SIZE], result[MAX_HTML_SIZE];
-    memset(body, 0, MAX_HTML_SIZE);
-    memset(result, 0, MAX_HTML_SIZE);
+    char body[MAX_HTML_LENGTH], result[MAX_HTML_LENGTH];
+    memset(body, 0, MAX_HTML_LENGTH);
+    memset(result, 0, MAX_HTML_LENGTH);
 
     /* Go through all the queries from the client and search for "bg". If
      * that is found than we set the color to the body of the response.
