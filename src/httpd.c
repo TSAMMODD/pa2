@@ -469,17 +469,9 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     time(&now);
     char buf[sizeof "2011-10-08T07:07:09Z"];
     strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
-    fprintf(stdout, "ONE\n\n");
-    fflush(stdout);    
     getRequestMethod(message, requestMethod);
-    fprintf(stdout, "TWO\n\n");
-    fflush(stdout);    
     getRequestURL(message, requestURL);
-    fprintf(stdout, "THREE\n\n");
-    fflush(stdout);    
     getCookie(message, cookie);
-    fprintf(stdout, "FOUR\n\n");
-    fflush(stdout);    
 
     if(strchr(requestURL, '?') != NULL) {
         getQuery(requestURL, query);
