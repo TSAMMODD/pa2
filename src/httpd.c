@@ -177,8 +177,10 @@ void typeOfConnection(char message[], char type[]) {
     }
 }
 
-/*
- *
+/* Method that tells if a client requested a persistence connection or not.
+ * If the request contains HTTP/1.1 the requested connection is persistence but
+ * if that does not apply than we have to search for a "Connection: keep-alive"
+ * message in the header from the client.
  */
 int getPersistence(char message[]) {
     char head[HEAD_LENGTH];
@@ -259,8 +261,15 @@ void handleHEADWithCookie(char head[], char variable[], char value[], int sizeOf
 
 
 /* A method that is called when we handle a GET request from a client.
- * It creates our server response to such a request and includes the correctly
- * structured header and content.
+ * It creates our server response as a HTML document to such a request
+ * and includes the correctly structured header and content.
+ * Parameters sent to this function are connfd (the connection file descriptor), 
+ * requestURL (the client's requested URL), ip_address (the client's IP address), 
+ * port (the client's port), head (the header lines sent in our server response),
+ * variable (if there is a query, this is the value left of the equation mark, i.e. "bg"),
+ * value (if there is a query, this is the value right of the equation mark, i.e. "red"),
+ * cookie (the cookie received from the client, if it exists), 
+ * allQueries (an array of all query parameters, described above in the getParam function).
  */
 void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[], char variable[], char value[], char cookie[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
     int colorCookie = 0;
@@ -348,16 +357,27 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
 }
 
 /* A method that is called when we handle a POST request from a client.
- * It creates our server response to such a request and includes the correctly
- * structured header and content.
+ * It creates our server response as a HTML document to such a request
+ * and includes the correctly structured header and content.
+ * Parameters sent to this function are connfd (the connection file descriptor), 
+ * requestURL (the client's requested URL), ip_address (the client's IP address), 
+ * port (the client's port), content (the content posted by the client), 
+ * head (the header lines sent in our server response),
+ * variable (if there is a query, this is the value left of the equation mark, i.e. "bg"),
+ * value (if there is a query, this is the value right of the equation mark, i.e. "red"),
+ * cookie (the cookie received from the client, if it exists), 
+ * allQueries (an array of all query parameters, described above in the getParam function).
  */
 void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char content[], char head[], char variable[], char value[], char cookie[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
-    int colorCookie = 0;
-    int i = 0;
     char body[MAX_HTML_SIZE], result[MAX_HTML_SIZE];
     memset(body, 0, MAX_HTML_SIZE);
     memset(result, 0, MAX_HTML_SIZE);
 
+    /* Go through all the queries from the client and search for "bg". If
+     * that is found than we set the color to the body of the response.
+     */
+    int colorCookie = 0;
+    int i = 0;
     while(strlen(allQueries[i]) != 0) {
         if(strcmp(allQueries[i], "bg") == 0) {
             strcpy(variable, allQueries[i]);
@@ -369,12 +389,18 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
         i += 2;
     }
     
+    /* If we found a query that contains "bg" than we set the bg-color. 
+     */     
     if((strchr(requestURL, '?') != NULL) && colorCookie == 1) {
         strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
         strcat(body, " style='background-color:");
         strcat(body, value);
         strcat(body, "'>\n");
     }
+    /* If we did not find "bg" in the queries we search in cookies. If
+     * we find "bg" in the the cookies that we set the bg-color to the
+     * value there.
+     */    
     else { 
         if(strlen(cookie) > 0) {
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
@@ -397,6 +423,7 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     strcat(body, requestURL);
     strcat(body, "<br>\n\t\t");
 
+    /* Set the query parameters to the body of the html. */ 
     if(cookie != NULL) {
         int j = 0;
         while(strlen(allQueries[j]) != 0) {
@@ -420,9 +447,13 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
 
     int sizeOfBody = strlen(body);
  
+    /* If we got a query that contained "bg" than we handle the head 
+     * with cookie. (It is add the cookie to the header response).
+     */
     if((strchr(requestURL, '?') != NULL) && colorCookie == 1) {
         handleHEADWithCookie(head, variable, value, sizeOfBody);
     }
+    /* Else we handle the head normally. */
     else {
         handleHEAD(head, sizeOfBody);
     }
