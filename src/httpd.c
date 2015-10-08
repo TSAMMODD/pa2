@@ -136,8 +136,30 @@ void getCookie(char message[], char cookie[]) {
 /*
  *
  */
+void typeOfConnection(char message[], char type[]) {
+    gchar** splitMessage = g_strsplit_set(message, " \n", MAX_TOKENS);
+    if(splitMessage[2] != NULL) {
+        strcpy(type, splitMessage[2]);
+    }
+    else {
+        type = NULL;
+    }
+}
+
+/*
+ *
+ */
 int getPersistence(char message[]) {
     char head[HEAD_LENGTH];
+    char type[512];
+    memset(head, 0, HEAD_LENGTH);
+    memset(type, 0, 512);
+    typeOfConnection(message, type);
+
+    if((type != NULL) && (strcmp(type, "HTTP/1.1\r") == 0)) {
+        return 1;
+    }
+
     gchar** splitMessage;
     gchar** tmpSplitMessage;
     getHead(message, head);
@@ -147,8 +169,6 @@ int getPersistence(char message[]) {
         splitMessage = g_strsplit(tmpSplitMessage[1], "\n", MAX_TOKENS);
         if(splitMessage[0] != NULL) {
             if((strcmp(splitMessage[0], "keep-alive\r") == 0) ||(strcmp(splitMessage[0], "Keep-Alive\r") == 0)) { 
-                //fprintf(stdout, "Keep-Alive: %s\n", splitMessage[0]);
-                //fflush(stdout);
                 return 1;
             }
         }
