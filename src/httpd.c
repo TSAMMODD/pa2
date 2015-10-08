@@ -542,9 +542,6 @@ int main(int argc, char **argv) {
     conn.connfd = -1;    
     conn.keepAlive = 0;
     
-    fprintf(stdout, "befor %d\n", sockfd);
-    fflush(stdout);
-    
     for (;;) {
         fd_set rfds;
         struct timeval tv;
@@ -574,33 +571,12 @@ int main(int argc, char **argv) {
                 FD_SET(connections[i].connfd, &rfds);
                 if(highestFD < connections[i].connfd){
                     highestFD = connections[i].connfd;
-                    fprintf(stdout, "UPDATE\n");
-                    fflush(stdout);
                 }
             }        
         }
-        /*
-        if((currTime - conn.startTime) > CONNECTION_TIME) {
-            shutdown(conn.connfd, SHUT_RDWR);
-            close(conn.connfd);
-            conn.connfd = -1;
-        } 
-        */
-        fprintf(stdout, "HighestFD: %d\n", highestFD);
-        fflush(stdout);
-        retval = select(highestFD + 1, &rfds, NULL, NULL, &tv);
-        /*
-        if(conn.connfd != -1) {
-            FD_SET(conn.connfd, &rfds);
-            retval = select(conn.connfd + 1, &rfds, NULL, NULL, &tv);
-        }
-        else {
-            retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
-        }
-        */
 
-        //sleep(2);
-        
+        retval = select(highestFD + 1, &rfds, NULL, NULL, &tv);
+
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
@@ -630,11 +606,6 @@ int main(int argc, char **argv) {
                     close(newconnfd);
                 }
             }
-            /*
-            if(FD_ISSET(sockfd, &rfds)) {
-                conn.connfd = accept(sockfd, (struct sockaddr *) &client, &len);
-                time(&conn.startTime);
-            }*/
             
             for(i=0; i < NUMBER_OF_CONNECTIONS; i++){
                 if(connections[i].connfd != -1){
@@ -665,35 +636,11 @@ int main(int argc, char **argv) {
                     }
                 }
             }
-            /*
-            ssize_t n = read(conn.connfd, message, sizeof(message) - 1);
-            message[n] = '\0';        
 
-            if(strlen(message) > 0) {
-                conn.keepAlive = getPersistence(message);
-                time(&conn.startTime);
-                handler(conn.connfd, client, fp, message, argv[1]);
-            }
-            else {
-                shutdown(conn.connfd, SHUT_RDWR);
-                close(conn.connfd);
-                conn.connfd = -1;
-            }
-
-
-            if(conn.keepAlive == 0) {
-                shutdown(conn.connfd, SHUT_RDWR);
-                close(conn.connfd);
-                conn.connfd = -1;
-            }
-            */
             fclose(fp);
         } else {
             fprintf(stdout, "No message in five seconds\n");
             fflush(stdout);
-            //shutdown(conn.connfd, SHUT_RDWR);
-            //close(conn.connfd);
-            //conn.connfd = -1;
         }
     }
 }
