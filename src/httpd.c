@@ -506,10 +506,14 @@ int main(int argc, char **argv) {
     /* Before we can accept messages, we have to listen to the port. We allow one
      * 1 connection to queue for simplicity.
      */
+    
     listen(sockfd, NUMBER_OF_CONNECTIONS);
     struct connection conn;
     conn.connfd = -1;    
     conn.keepAlive = 0;
+    
+    fprintf(stdout, "befor %d\n", sockfd);
+    fflush(stdout);
     
     for (;;) {
         fd_set rfds;
@@ -526,16 +530,36 @@ int main(int argc, char **argv) {
         tv.tv_usec = 0;
         time(&currTime);
         
+        int highestFD = sockfd;
+
         for(i = 0; i < NUMBER_OF_CONNECTIONS; i++){
-            
+            if(connections[i].connfd != -1){
+                if((currTime - connections[i].startTime) > CONNECTION_TIME){
+                    shutdown(connections[i].connfd, SHUT_RDWR);
+                    close(connections[i].connfd);
+                    connections[i].connfd = -1;
+                }
+            }
+            if(connections[i].connfd != -1){
+                FD_SET(connections[i].connfd, &rfds);
+                if(highestFD < connections[i].connfd){
+                    highestFD = connections[i].connfd;
+                    fprintf(stdout, "UPDATE\n");
+                    fflush(stdout);
+                }
+            }        
         }
- 
+        /*
         if((currTime - conn.startTime) > CONNECTION_TIME) {
             shutdown(conn.connfd, SHUT_RDWR);
             close(conn.connfd);
             conn.connfd = -1;
         } 
-
+        */
+        fprintf(stdout, "HighestFD: %d\n", highestFD);
+        fflush(stdout);
+        retval = select(highestFD + 1, &rfds, NULL, NULL, &tv);
+        /*
         if(conn.connfd != -1) {
             FD_SET(conn.connfd, &rfds);
             retval = select(conn.connfd + 1, &rfds, NULL, NULL, &tv);
@@ -543,12 +567,14 @@ int main(int argc, char **argv) {
         else {
             retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
         }
+        */
 
         //sleep(2);
         
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
+
             /* Open file. */
             fp = fopen("src/httpd.log", "a+");
 
@@ -557,12 +583,59 @@ int main(int argc, char **argv) {
 
             /* Copy to len, since recvfrom may change it. */
             socklen_t len = (socklen_t) sizeof(client);
-
+            
+            if(FD_ISSET(sockfd, &rfds)) {
+                int newconnfd = accept(sockfd, (struct sockaddr *) &client, &len);
+                for(i=0; i < NUMBER_OF_CONNECTIONS; i++){
+                    if(connections[i].connfd == -1){
+                        connections[i].connfd =  newconnfd;
+                        time(&connections[i].startTime);
+                        newconnfd = -1;
+                        break;
+                    }
+                }
+                
+                if(newconnfd != -1) {
+                    shutdown(newconnfd, SHUT_RDWR);
+                    close(newconnfd);
+                }
+            }
+            /*
             if(FD_ISSET(sockfd, &rfds)) {
                 conn.connfd = accept(sockfd, (struct sockaddr *) &client, &len);
                 time(&conn.startTime);
+            }*/
+            
+            for(i=0; i < NUMBER_OF_CONNECTIONS; i++){
+                if(connections[i].connfd != -1){
+                    if(FD_ISSET(connections[i].connfd, &rfds)){
+                        memset(message, 0, MESSAGE_LENGTH);
+                        
+                        ssize_t n = read(connections[i].connfd, message, sizeof(message) - 1);
+                        message[n] = '\0';        
+
+                        if(strlen(message) > 0) {
+                            connections[i].keepAlive = getPersistence(message);
+                            time(&connections[i].startTime);
+                            handler(connections[i].connfd, client, fp, message, argv[1]);
+                        }
+                        else {
+                            shutdown(connections[i].connfd, SHUT_RDWR);
+                            close(connections[i].connfd);
+                            connections[i].connfd = -1;
+                        }
+
+
+                        if(connections[i].keepAlive == 0) {
+                            shutdown(connections[i].connfd, SHUT_RDWR);
+                            close(connections[i].connfd);
+                            connections[i].connfd = -1;
+                        }
+
+                    }
+                }
             }
-        
+            /*
             ssize_t n = read(conn.connfd, message, sizeof(message) - 1);
             message[n] = '\0';        
 
@@ -583,12 +656,15 @@ int main(int argc, char **argv) {
                 close(conn.connfd);
                 conn.connfd = -1;
             }
-
+            */
             fclose(fp);
         } else {
-            shutdown(conn.connfd, SHUT_RDWR);
-            close(conn.connfd);
-            conn.connfd = -1;
+            fprintf(stdout, "No message in 5 seconds\n");
+            fflush(stdout);
+
+            //shutdown(conn.connfd, SHUT_RDWR);
+            //close(conn.connfd);
+            //conn.connfd = -1;
         }
     }
 }
