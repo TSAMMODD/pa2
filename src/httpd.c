@@ -507,16 +507,24 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
 }
 
 int main(int argc, char **argv) {
+    /* Create filepointer for log file */
     FILE *fp;
     fprintf(stdout, "%d \n", argc);
     fflush(stdout);
+    /* Create sockfd */
     int sockfd;
+    /* Create a sockaddress for server and client */
     struct sockaddr_in server, client;
+    /* Create a message of size MESSAGE_LENGTH to store message from client */
     char message[MESSAGE_LENGTH];
+    /* Create and get current time for use with persistence */
     time_t currTime;
     time(&currTime);
+    /* Struct an array of connections where we will store connections for parallel */
     struct connection connections[NUMBER_OF_CONNECTIONS];
-    
+    /* Initialize connections fd's as -1 to know they're not set later, also 
+     * initialize their persistence setting to false (keepalive = false).
+     */
     int i = 0;
     for(i; i < NUMBER_OF_CONNECTIONS; i++){
         connections[i].connfd = -1;
@@ -534,13 +542,10 @@ int main(int argc, char **argv) {
     bind(sockfd, (struct sockaddr *) &server, (socklen_t) sizeof(server));
 
     /* Before we can accept messages, we have to listen to the port. We allow one
-     * 1 connection to queue for simplicity.
+     * 5 ("NUMBER_OF_CONNECTIONS") connection to queue parallel.
      */
     
     listen(sockfd, NUMBER_OF_CONNECTIONS);
-    struct connection conn;
-    conn.connfd = -1;    
-    conn.keepAlive = 0;
     
     for (;;) {
         fd_set rfds;
@@ -584,8 +589,6 @@ int main(int argc, char **argv) {
             /* Open file. */
             fp = fopen("src/httpd.log", "a+");
 
-            /* Data is available, receive it. */
-            //assert(FD_ISSET(sockfd, &rfds));
 
             /* Copy to len, since recvfrom may change it. */
             socklen_t len = (socklen_t) sizeof(client);
