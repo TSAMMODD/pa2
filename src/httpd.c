@@ -48,7 +48,13 @@ struct connection {
  */
 void getRequestMethod(char message[], char requestMethod[]) {
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
-    strcpy(requestMethod, (char*)splitMessage[0]);
+    if(splitMessage[0] != NULL) {
+        strcpy(requestMethod, (char*)splitMessage[0]);
+    }
+    else {
+        requestMethod = NULL;
+    }
+
     g_strfreev(splitMessage);
 }
 
@@ -57,7 +63,13 @@ void getRequestMethod(char message[], char requestMethod[]) {
  */
 void getRequestURL(char message[], char requestURL[]) {
     gchar** splitMessage = g_strsplit(message, " ", MAX_TOKENS);
-    strcat(requestURL, splitMessage[1]);
+    if(splitMessage[1] != NULL) {
+        strcat(requestURL, splitMessage[1]);
+    }
+    else {
+        requestURL = NULL;
+    }
+
     g_strfreev(splitMessage);
 }
 
@@ -67,7 +79,13 @@ void getRequestURL(char message[], char requestURL[]) {
  */
 void getQuery(char requestURL[], char query[]) { 
     gchar** splitMessage = g_strsplit(requestURL, "?", MAX_TOKENS);
-    strcpy(query, splitMessage[1]);
+    if(splitMessage[1] != NULL) {
+        strcpy(query, splitMessage[1]);
+    }
+    else {
+        query = NULL;
+    }
+
     g_strfreev(splitMessage);
 }
 
@@ -104,7 +122,13 @@ void getParam(char query[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LEN
  */
 void getContent(char message[], char content[]) {
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
-    strcat(content, splitMessage[1]);
+    if(splitMessage[1] != NULL) {
+        strcat(content, splitMessage[1]);
+    }
+    else {
+        content = NULL;
+    }
+
     g_strfreev(splitMessage);
 }
 
@@ -114,7 +138,13 @@ void getContent(char message[], char content[]) {
  */
 void getHead(char message[], char head[]) {	
     gchar** splitMessage = g_strsplit(message, "\r\n\r\n", MAX_TOKENS); 
-    strcat(head, splitMessage[0]);
+    if(splitMessage[0] != NULL) {
+        strcat(head, splitMessage[0]);
+    }
+    else {
+        head = NULL;
+    }
+    
     g_strfreev(splitMessage);
 }
 
@@ -439,9 +469,17 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     time(&now);
     char buf[sizeof "2011-10-08T07:07:09Z"];
     strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
+    fprintf(stdout, "ONE\n\n");
+    fflush(stdout);    
     getRequestMethod(message, requestMethod);
+    fprintf(stdout, "TWO\n\n");
+    fflush(stdout);    
     getRequestURL(message, requestURL);
+    fprintf(stdout, "THREE\n\n");
+    fflush(stdout);    
     getCookie(message, cookie);
+    fprintf(stdout, "FOUR\n\n");
+    fflush(stdout);    
 
     if(strchr(requestURL, '?') != NULL) {
         getQuery(requestURL, query);
