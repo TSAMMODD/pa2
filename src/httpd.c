@@ -278,6 +278,9 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     memset(body, 0, MAX_HTML_SIZE);
     memset(result, 0, MAX_HTML_SIZE);
 
+    /* Go through all the queries from the client and search for "bg". If
+     * that is found than we set the color to the body tag of the response.
+     */
     while(strlen(allQueries[i]) != 0) {
         if(strcmp(allQueries[i], "bg") == 0) {
             strcpy(variable, allQueries[i]);
@@ -288,12 +291,18 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
         i += 2;
     }
         
+    /* If we found a query that contains "bg" than we set the bg-color. 
+     */     
     if((strchr(requestURL, '?') != NULL) && colorCookie == 1) {
         strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
         strcat(body, " style='background-color:");
         strcat(body, value);
         strcat(body, "'>\n");
     }
+    /* If we did not find "bg" in the queries we search in cookies. If
+     * we find "bg" in the the cookies then we set the bg-color to the
+     * value there.
+     */    
     else {
         if(strlen(cookie) > 0) {
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
@@ -316,6 +325,7 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     strcat(body, requestURL);
     strcat(body, "<br>\n\t\t");
 
+    /* Set the query parameters to the body of the html. */ 
     if(cookie != NULL) {
         int j = 0;
         while(strlen(allQueries[j]) > 0) {
@@ -342,9 +352,13 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
 
     int sizeOfBody = strlen(body);
  
+    /* If we got a query that contained "bg" then we handle the head 
+     * with cookie. (That is add the cookie to the header response).
+     */
     if((strchr(requestURL, '?') != NULL) && colorCookie == 1) {
         handleHEADWithCookie(head, variable, value, sizeOfBody);
     }
+    /* Else we handle the head normally. */
     else {
         handleHEAD(head, sizeOfBody);
     }
@@ -374,7 +388,7 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     memset(result, 0, MAX_HTML_SIZE);
 
     /* Go through all the queries from the client and search for "bg". If
-     * that is found than we set the color to the body of the response.
+     * that is found than we set the color to the body tag of the response.
      */
     int colorCookie = 0;
     int i = 0;
@@ -398,7 +412,7 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
         strcat(body, "'>\n");
     }
     /* If we did not find "bg" in the queries we search in cookies. If
-     * we find "bg" in the the cookies that we set the bg-color to the
+     * we find "bg" in the the cookies then we set the bg-color to the
      * value there.
      */    
     else { 
@@ -447,8 +461,8 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
 
     int sizeOfBody = strlen(body);
  
-    /* If we got a query that contained "bg" than we handle the head 
-     * with cookie. (It is add the cookie to the header response).
+    /* If we got a query that contained "bg" then we handle the head 
+     * with cookie. (That is add the cookie to the header response).
      */
     if((strchr(requestURL, '?') != NULL) && colorCookie == 1) {
         handleHEADWithCookie(head, variable, value, sizeOfBody);
