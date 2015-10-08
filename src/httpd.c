@@ -164,8 +164,8 @@ void getCookie(char message[], char cookie[]) {
     g_strfreev(splitMessage);
 }
 
-/*
- *
+/* A method that gets the type of the connection we are dealing with,
+ * i.e. "HTTP/1.1" or "HTTP/1.0" etc.
  */
 void typeOfConnection(char message[], char type[]) {
     gchar** splitMessage = g_strsplit_set(message, " \n", MAX_TOKENS);
