@@ -287,7 +287,7 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
         handleHEADWithCookie(head, variable, value, sizeOfBody);
     }
     else {
-        handleHEADWithCookie(head, variable, value, sizeOfBody);
+        handleHEAD(head, sizeOfBody);
     }
 
     strcpy(result, head);
@@ -377,7 +377,7 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
         handleHEADWithCookie(head, variable, value, sizeOfBody);
     }
     else {
-        handleHEADWithCookie(head, variable, value, sizeOfBody);
+        handleHEAD(head, sizeOfBody);
     }
 
     strcpy(result, head);
