@@ -278,7 +278,7 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
         }
         i += 2;
     }
-    
+        
     if((strchr(requestURL, '?') != NULL) && colorCookie == 1) {
         strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
         strcat(body, " style='background-color:");
@@ -288,15 +288,13 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
     else {
         if(strlen(cookie) > 0) {
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
-            int i = 0;
-            while(strlen(allQueries[i]) > 0) {
-                if(strcmp(allQueries[i], "bg") == 0) {
-                    strcat(body, " style='background-color:");
-                    strcat(body, allQueries[i+1]);
-                    strcat(body, "'");
-                    break;
-                }
-                i += 2;
+            gchar** splitCookie = g_strsplit(cookie, "=", MAX_TOKENS);
+
+            if((strcmp(splitCookie[0], "bg") == 0) && (splitCookie[1] != NULL)) {
+                gchar** cleanValue = g_strsplit_set(splitCookie[1], " \n\r", MAX_TOKENS);
+                strcat(body, " style='background-color:");
+                strcat(body, cleanValue[0]);
+                strcat(body, "'");
             }
             strcat(body, ">\n");
         }
@@ -380,17 +378,13 @@ void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char
     else { 
         if(strlen(cookie) > 0) {
             strcat(body, "<!DOCTYPE html>\n<html>\n<head></head>\n<body");
-            int i = 0;
+            gchar** splitCookie = g_strsplit(cookie, "=", MAX_TOKENS);
 
-            while(strlen(allQueries[i]) != 0) {
-                if(strcmp(allQueries[i], "bg") == 0) {
-                    strcat(body, " style='background-color:");
-                    strcat(body, allQueries[i+1]);
-                    strcat(body, "'");
-                    break;
-                }
-
-                i += 2;
+            if((strcmp(splitCookie[0], "bg") == 0) && (splitCookie[1] != NULL)) {
+                gchar** cleanValue = g_strsplit_set(splitCookie[1], " \n\r", MAX_TOKENS);
+                strcat(body, " style='background-color:");
+                strcat(body, cleanValue[0]);
+                strcat(body, "'");
             }
             strcat(body, ">\n");
         }
