@@ -659,9 +659,8 @@ int main(int argc, char **argv) {
             */
             fclose(fp);
         } else {
-            fprintf(stdout, "No message in 5 seconds\n");
+            fprintf(stdout, "No message in five seconds\n");
             fflush(stdout);
-
             //shutdown(conn.connfd, SHUT_RDWR);
             //close(conn.connfd);
             //conn.connfd = -1;
