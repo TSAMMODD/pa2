@@ -465,6 +465,13 @@ int main(int argc, char **argv) {
     char message[MESSAGE_LENGTH];
     time_t currTime;
     time(&currTime);
+    struct connection connections[NUMBER_OF_CONNECTIONS];
+    
+    int i = 0;
+    for(i; i < NUMBER_OF_CONNECTIONS; i++){
+        connections[i].connfd = -1;
+        connections[i].keepAlive = 0;
+    }
 
     /* Create and bind a UDP socket */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -479,7 +486,7 @@ int main(int argc, char **argv) {
     /* Before we can accept messages, we have to listen to the port. We allow one
      * 1 connection to queue for simplicity.
      */
-    listen(sockfd, 1);
+    listen(sockfd, NUMBER_OF_CONNECTIONS);
     struct connection conn;
     conn.connfd = -1;    
     conn.keepAlive = 0;
@@ -499,6 +506,10 @@ int main(int argc, char **argv) {
         tv.tv_usec = 0;
         time(&currTime);
         
+        for(i = 0; i < NUMBER_OF_CONNECTIONS; i++){
+            
+        }
+ 
         if((currTime - conn.startTime) > CONNECTION_TIME) {
             shutdown(conn.connfd, SHUT_RDWR);
             close(conn.connfd);
