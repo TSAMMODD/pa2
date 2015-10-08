@@ -670,29 +670,44 @@ int main(int argc, char **argv) {
                 }
             }
             
-            /* 
-             *
-             */
+            /*  Read/handle loop for connections */ 
             for(i=0; i < NUMBER_OF_CONNECTIONS; i++){
+                /* Check if the connection is active */
                 if(connections[i].connfd != -1){
+                    /* Check if the connection has data ready to be read */
                     if(FD_ISSET(connections[i].connfd, &rfds)){
+                        /* Clear old message contents */
                         memset(message, 0, MESSAGE_LENGTH);
-                        
+                        /* Read from the connection */
                         ssize_t n = read(connections[i].connfd, message, sizeof(message) - 1);
                         message[n] = '\0';        
-
+                        /* If the message gotten from the connection has a size
+                         * larger than 0, check if it supposed to be persistent,
+                         * reset the start time of the connection so it can go 
+                         * another 30 seconds and send the message to our handler.
+                         */
                         if(strlen(message) > 0) {
                             connections[i].keepAlive = getPersistence(message);
                             time(&connections[i].startTime);
+                            /* Handle the message's content, also send the
+                             * connections' fd, client, logfile and port of server.
+                             */
                             handler(connections[i].connfd, client, fp, message, argv[1]);
                         }
                         else {
+                            /* Here the message size is 0 (or less) which we interpret
+                             * as the persistent connection telling us it is done with
+                             * sending us messages. Close the connection and reset its
+                             * slot in the connection list.
+                             */
                             shutdown(connections[i].connfd, SHUT_RDWR);
                             close(connections[i].connfd);
                             connections[i].connfd = -1;
                         }
 
-
+                        /* Check if the connection should be kept alive and close it
+                         * if it isn't. 
+                         */
                         if(connections[i].keepAlive == 0) {
                             shutdown(connections[i].connfd, SHUT_RDWR);
                             close(connections[i].connfd);
@@ -702,9 +717,10 @@ int main(int argc, char **argv) {
                     }
                 }
             }
-
+            /* Close the logfile */
             fclose(fp);
         } else {
+            /* Select has no connections to be read from. */
             fprintf(stdout, "No message in five seconds\n");
             fflush(stdout);
         }
