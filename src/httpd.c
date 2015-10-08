@@ -549,7 +549,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
 int main(int argc, char **argv) {
     /* Create filepointer for log file */
     FILE *fp;
-    fprintf(stdout, "%d \n", argc);
+    fprintf(stdout, "SERVER INITIALIZING -- %d C00L 4 SCH00L!\n", argc);
     fflush(stdout);
     /* Create sockfd */
     int sockfd;
