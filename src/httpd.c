@@ -20,6 +20,7 @@
 #include <glib.h>
 #include <stdlib.h>
 
+/* Macros */
 #define REQUEST_METHOD_LENGTH 8
 #define REQUEST_URL_LENGTH 100
 #define MAX_TOKENS -1
@@ -34,8 +35,8 @@
 #define MAX_QUERY_LENGTH 100
 #define NUMBER_OF_CONNECTIONS 5
 
-/*
- *
+/* A struct containing information about a connection, that is its file descriptor, 
+ * whether the connection is "keep-alive" or not, and the starting time of the connection.
  */
 struct connection {
     int connfd;
