@@ -207,8 +207,9 @@ void handleHEADWithCookie(char head[], char variable[], char value[], int sizeOf
 }
 
 
-/*
- *
+/* A method that is called when we handle a GET request from a client.
+ * It creates our server response to such a request and includes the correctly
+ * structured header and content.
  */
 void handleGET(int connfd, char requestURL[], char ip_address[], int port, char head[], char variable[], char value[], char cookie[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
     int colorCookie = 0;
