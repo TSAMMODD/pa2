@@ -39,8 +39,8 @@
  */
 struct connection {
     int connfd;
-    struct timeval tv;
     int keepAlive;
+    time_t startTime;
 };
 
 /* A method that gets the first string from the request from
@@ -142,16 +142,13 @@ int getPersistence(char message[]) {
     gchar** tmpSplitMessage;
     getHead(message, head);
     tmpSplitMessage = g_strsplit(message, "Connection: ", MAX_TOKENS);
-
-    fprintf(stdout, "Inside gerPer\n");
-    fflush(stdout);
     
     if(tmpSplitMessage[1] != NULL) {
         splitMessage = g_strsplit(tmpSplitMessage[1], "\n", MAX_TOKENS);
         if(splitMessage[0] != NULL) {
             if((strcmp(splitMessage[0], "keep-alive\r") == 0) ||(strcmp(splitMessage[0], "Keep-Alive\r") == 0)) { 
-                fprintf(stdout, "Keep-Alive: %s\n", splitMessage[0]);
-                fflush(stdout);
+                //fprintf(stdout, "Keep-Alive: %s\n", splitMessage[0]);
+                //fflush(stdout);
                 return 1;
             }
         }
@@ -420,11 +417,7 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
     time(&now);
     char buf[sizeof "2011-10-08T07:07:09Z"];
     strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
-    fprintf(stdout, "\n\nflot\n\n");
-    fflush(stdout);
     getRequestMethod(message, requestMethod);
-    fprintf(stdout, "\n\nflot2\n\n");
-    fflush(stdout);
     getRequestURL(message, requestURL);
     getCookie(message, cookie);
 
@@ -465,14 +458,12 @@ int main(int argc, char **argv) {
     FILE *fp;
     fprintf(stderr, "%d \n", argc);
     fflush(stderr);
-
     int sockfd;
     struct sockaddr_in server, client;
     char message[MESSAGE_LENGTH];
     time_t currTime;
-    time_t elapsedTime;
-    time(&elapsedTime);
     time(&currTime);
+
     /* Create and bind a UDP socket */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     memset(&server, 0, sizeof(server));
@@ -489,8 +480,6 @@ int main(int argc, char **argv) {
     listen(sockfd, 1);
     struct connection conn;
     conn.connfd = -1;    
-    conn.tv.tv_sec = CONNECTION_TIME; 
-    conn.tv.tv_usec = 0;
     conn.keepAlive = 0;
     
     for (;;) {
@@ -506,6 +495,13 @@ int main(int argc, char **argv) {
         /* Wait for five seconds. */
         tv.tv_sec = 5;
         tv.tv_usec = 0;
+        time(&currTime);
+        
+        if((currTime - conn.startTime) > CONNECTION_TIME) {
+            shutdown(conn.connfd, SHUT_RDWR);
+            close(conn.connfd);
+            conn.connfd = -1;
+        } 
 
         if(conn.connfd != -1) {
             FD_SET(conn.connfd, &rfds);
@@ -531,22 +527,25 @@ int main(int argc, char **argv) {
 
             if(FD_ISSET(sockfd, &rfds)) {
                 conn.connfd = accept(sockfd, (struct sockaddr *) &client, &len);
-                FD_SET(conn.connfd, &rfds);
+                time(&conn.startTime);
             }
             
             ssize_t n = read(conn.connfd, message, sizeof(message) - 1);
             message[n] = '\0';        
 
-            //if(FD_ISSET(conn.connfd, &rfds)) {    
             if(strlen(message) > 0) {
                 conn.keepAlive = getPersistence(message);
+                time(&conn.startTime);
                 handler(conn.connfd, client, fp, message, argv[1]);
             }
+
+            /*
             else {
                 shutdown(conn.connfd, SHUT_RDWR);
                 close(conn.connfd);
                 conn.connfd = -1;
             }
+            */
 
             if(!conn.keepAlive) {
                 shutdown(conn.connfd, SHUT_RDWR);
