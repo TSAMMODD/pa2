@@ -517,6 +517,7 @@ int main(int argc, char **argv) {
     time(&currTime);
     /* Struct an array of connections where we will store connections for parallel */
     struct connection connections[NUMBER_OF_CONNECTIONS];
+    
     /* Initialize connections fd's as -1 to know they're not set later, also 
      * initialize their persistence setting to false (keepalive = false).
      */
@@ -528,37 +529,52 @@ int main(int argc, char **argv) {
 
     /* Create and bind a UDP socket */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    /* Clear anything that might have left in server */
     memset(&server, 0, sizeof(server));
     server.sin_family = AF_INET;
     /* Network functions need arguments in network byte order instead of
-       host byte order. The macros htonl, htons convert the values, */
+     * host byte order. The macros htonl, htons convert the values, 
+     */
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(atoi(argv[1]));
     bind(sockfd, (struct sockaddr *) &server, (socklen_t) sizeof(server));
 
-    /* Before we can accept messages, we have to listen to the port. We allow one
-     * 5 ("NUMBER_OF_CONNECTIONS") connection to queue parallel.
+    /* Before we can accept messages, we have to listen to the port. We allow five
+     * ("NUMBER_OF_CONNECTIONS") connection to queue parallel.
      */
-    
     listen(sockfd, NUMBER_OF_CONNECTIONS);
     
     for (;;) {
+        /* Create fd_set to store fd's */
         fd_set rfds;
+        /* TimeVal for select timeout */
         struct timeval tv;
+        /* Retval for return value from select */
         int retval;
+        /* Clear the message of unwanted old bytes */
         memset(message, 0, MESSAGE_LENGTH);
 
         /* Check whether there is data on the socket fd. */
         FD_ZERO(&rfds);
         FD_SET(sockfd, &rfds);
 
-        /* Wait for five seconds. */
+        /* Wait for five seconds in select() timeout. */
         tv.tv_sec = 5;
         tv.tv_usec = 0;
+        /* Update current time for use with 30 second timeout for persistence */
         time(&currTime);
-        
+        /* Store the highest fd to know how far to check in select */
         int highestFD = sockfd;
-
+        
+        /* Loop through all connections in list, check if they're connected
+         * and if they are check if their 30 second keep-alive time is up,
+         * if it is up: close the connection and reset the fd to -1 to know
+         * that now it's not in use.
+         * if 30 seconds from connection message: put it in the fd_set to
+         * so that select will cover it. Also put it as the highest fd if
+         * it is higher than the last connection or sockfd so that select
+         * will cover that far.
+         */
         for(i = 0; i < NUMBER_OF_CONNECTIONS; i++){
             if(connections[i].connfd != -1){
                 if((currTime - connections[i].startTime) > CONNECTION_TIME){
@@ -574,22 +590,38 @@ int main(int argc, char **argv) {
                 }
             }        
         }
-
+        
+        /* Scan all connections for data to be read, scan for 5 seconds */
         retval = select(highestFD + 1, &rfds, NULL, NULL, &tv);
 
         if (retval == -1) {
             perror("select()");
         } else if (retval > 0) {
-
+            /* When retval is > 0 there is something to be read for any of 
+             * the connections or socfd. 
+             */
             /* Open file. */
             fp = fopen("src/httpd.log", "a+");
-
 
             /* Copy to len, since recvfrom may change it. */
             socklen_t len = (socklen_t) sizeof(client);
             
+            /* Check if sockfd had data at select() */
             if(FD_ISSET(sockfd, &rfds)) {
+                /* This means there is a new, unhandled connection ready 
+                 * to be dealt with so we accept it and store it in a temp
+                 * variable to be sure we can add it to our list later.
+                 */
                 int newconnfd = accept(sockfd, (struct sockaddr *) &client, &len);
+                
+                /* Loop through all connections and see if any one of them
+                 * can store our new connection.
+                 * If it there is room free in our list, store the connections
+                 * fd and give it a start time for persistence checking.
+                 * Also, give the temp variable for the new connection a
+                 * value of -1 to know later that the connection is being stored.
+                 * Break when we find an empty slot.
+                 */ 
                 for(i=0; i < NUMBER_OF_CONNECTIONS; i++){
                     if(connections[i].connfd == -1){
                         connections[i].connfd =  newconnfd;
@@ -598,13 +630,18 @@ int main(int argc, char **argv) {
                         break;
                     }
                 }
-                
+                /* Check if the temp connection was stored and if there was
+                 * no room: close the connection.
+                 */
                 if(newconnfd != -1) {
                     shutdown(newconnfd, SHUT_RDWR);
                     close(newconnfd);
                 }
             }
             
+            /* 
+             *
+             */
             for(i=0; i < NUMBER_OF_CONNECTIONS; i++){
                 if(connections[i].connfd != -1){
                     if(FD_ISSET(connections[i].connfd, &rfds)){
