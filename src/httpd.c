@@ -539,15 +539,9 @@ int main(int argc, char **argv) {
                 handler(conn.connfd, client, fp, message, argv[1]);
             }
 
-            /*
-            else {
-                shutdown(conn.connfd, SHUT_RDWR);
-                close(conn.connfd);
-                conn.connfd = -1;
-            }
-            */
-
-            if(!conn.keepAlive) {
+            if(conn.keepAlive == 0) {
+                fprintf(stdout, "\n\nCLOSING HERE!\n\n");
+                fflush(stdout);
                 shutdown(conn.connfd, SHUT_RDWR);
                 close(conn.connfd);
                 conn.connfd = -1;
