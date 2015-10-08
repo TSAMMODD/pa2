@@ -359,6 +359,14 @@ void handleGET(int connfd, char requestURL[], char ip_address[], int port, char 
 /* A method that is called when we handle a POST request from a client.
  * It creates our server response to such a request and includes the correctly
  * structured header and content.
+ * Parameters sent to this function are connfd (the connection file descriptor), 
+ * requestURL (the client's requested URL), ip_address (the client's IP address), 
+ * port (the client's port), content (the content posted by the client), 
+ * head (the header lines sent in our server response),
+ * variable (if there is a query, this is the value left of the equation mark, i.e. "bg"),
+ * value (if there is a query, this is the value right of the equation mark, i.e. "red"),
+ * cookie (the cookie received from the client, if it exists), 
+ * allQueries (an array of all query parameters, described above in the getParam function).
  */
 void handlePOST(int connfd, char requestURL[], char ip_address[], int port, char content[], char head[], char variable[], char value[], char cookie[], char allQueries[MAX_NUMBER_OF_QUERIES][MAX_QUERY_LENGTH]) {
     int colorCookie = 0;
