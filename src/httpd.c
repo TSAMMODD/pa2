@@ -457,8 +457,8 @@ void handler(int connfd, struct sockaddr_in client, FILE *fp, char message[], ch
 
 int main(int argc, char **argv) {
     FILE *fp;
-    fprintf(stderr, "%d \n", argc);
-    fflush(stderr);
+    fprintf(stdout, "%d \n", argc);
+    fflush(stdout);
     int sockfd;
     struct sockaddr_in server, client;
     char message[MESSAGE_LENGTH];
@@ -527,12 +527,10 @@ int main(int argc, char **argv) {
             socklen_t len = (socklen_t) sizeof(client);
 
             if(FD_ISSET(sockfd, &rfds)) {
-                fprintf(stdout, "inside accept :/\n\n");
-                fflush(stdout);
                 conn.connfd = accept(sockfd, (struct sockaddr *) &client, &len);
                 time(&conn.startTime);
             }
-            
+        
             ssize_t n = read(conn.connfd, message, sizeof(message) - 1);
             message[n] = '\0';        
 
@@ -541,22 +539,21 @@ int main(int argc, char **argv) {
                 time(&conn.startTime);
                 handler(conn.connfd, client, fp, message, argv[1]);
             }
-
-            if(conn.keepAlive == 0) {
-                fprintf(stdout, "\n\nBefor closing!\n\n");
-                fflush(stdout);
-                sleep(2);
+            else {
                 shutdown(conn.connfd, SHUT_RDWR);
                 close(conn.connfd);
                 conn.connfd = -1;
-                fprintf(stdout, "\n\nAfter closing!\n\n");
-                fflush(stdout);
+            }
+
+
+            if(conn.keepAlive == 0) {
+                shutdown(conn.connfd, SHUT_RDWR);
+                close(conn.connfd);
+                conn.connfd = -1;
             }
 
             fclose(fp);
         } else {
-            fprintf(stdout, "No message in five seconds.\n");
-            fflush(stdout);
             shutdown(conn.connfd, SHUT_RDWR);
             close(conn.connfd);
             conn.connfd = -1;
